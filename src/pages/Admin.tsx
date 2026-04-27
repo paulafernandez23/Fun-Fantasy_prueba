@@ -178,6 +178,7 @@ function AdminContent() {
           const content: Record<string, any> = {};
           snap.docs.forEach(doc => { content[doc.id] = doc.data(); });
           setSiteContent(content);
+          setLocalCMS(content);
         })
         .finally(() => setContentLoading(false));
     }
@@ -483,7 +484,7 @@ function AdminContent() {
     try {
       const categoryData = {
         name: newCategory.name,
-        subcategories: newCategory.subcategories.split(',').map(s => s.trim()).filter(s => s !== '')
+        subcategories: (newCategory.subcategories || '').split(',').map(s => s.trim()).filter(s => s !== '')
       };
 
       if (editingCategory) {
@@ -587,14 +588,16 @@ function AdminContent() {
     reader.readAsText(file);
   };
 
-  const handleSaveContent = async (pageId: string, data: any) => {
+  const handleSaveContent = async (pageId: string) => {
     setIsSaving(true);
     try {
+      const data = localCMS[pageId] || {};
       await setDoc(doc(db, 'site_content', pageId), data, { merge: true });
       setSiteContent(prev => ({ 
         ...prev, 
-        [pageId]: { ...(prev[pageId] || {}), ...data } 
+        [pageId]: data 
       }));
+      showAlert('Éxito', 'Contenido guardado correctamente.');
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
@@ -612,7 +615,22 @@ function AdminContent() {
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
       
-      await handleSaveContent(pageId, { [field]: url });
+      const updatedPageData = { ...(localCMS[pageId] || {}), [field]: url };
+      
+      // Actualizar localmente primero
+      setLocalCMS(prev => ({
+        ...prev,
+        [pageId]: updatedPageData
+      }));
+
+      // Guardar en Firestore
+      await setDoc(doc(db, 'site_content', pageId), { [field]: url }, { merge: true });
+      
+      setSiteContent(prev => ({
+        ...prev,
+        [pageId]: { ...(prev[pageId] || {}), [field]: url }
+      }));
+
       showAlert('Imagen Subida', 'La imagen se ha actualizado correctamente.');
     } catch (error) {
       console.error(error);
@@ -1769,175 +1787,272 @@ function AdminContent() {
           </div>
         );
       case 'contenido':
+        const updateLocalField = (pageId: string, field: string, value: any) => {
+          setLocalCMS(prev => ({
+            ...prev,
+            [pageId]: { ...(prev[pageId] || {}), [field]: value }
+          }));
+        };
+
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Personalización de Contenido Web</h2>
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-3xl font-black text-on-surface flex items-center gap-3">
+                  <span className="material-symbols-outlined text-primary text-4xl">web</span>
+                  Personalización Web (CMS)
+                </h2>
+                <p className="text-on-surface-variant mt-1">Gestiona los textos e imágenes de las secciones públicas de tu tienda.</p>
+              </div>
+            </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Home Page CMS */}
-              <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden flex flex-col">
-                <div className="p-6 border-b border-outline-variant/20 bg-surface-container/30">
-                  <h3 className="font-bold flex items-center gap-2">
-                    <span className="material-symbols-outlined text-primary">home</span>
-                    Página de Inicio (Home)
+              <div className="bg-surface-container-lowest rounded-[2.5rem] border border-outline-variant/30 shadow-sm overflow-hidden flex flex-col group hover:border-primary/30 transition-all">
+                <div className="p-8 border-b border-outline-variant/20 bg-surface-container/30 flex items-center justify-between">
+                  <h3 className="font-black flex items-center gap-3 text-lg">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                      <span className="material-symbols-outlined">home</span>
+                    </div>
+                    Página de Inicio
                   </h3>
+                  <button 
+                    onClick={() => handleSaveContent('home')}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">save</span>
+                    Guardar Inicio
+                  </button>
                 </div>
-                <div className="p-6 space-y-4 flex-grow">
-                  <div className="grid grid-cols-1 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold uppercase mb-1">Título Hero</label>
+                <div className="p-8 space-y-6 flex-grow">
+                  <div className="grid grid-cols-1 gap-6">
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Título Hero (Cabecera)</label>
                       <input 
                         type="text" 
-                        defaultValue={siteContent.home?.heroTitle || 'Bienvenido a Fun Fantasy'} 
-                        onBlur={e => handleSaveContent('home', { heroTitle: e.target.value })}
-                        className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm" 
+                        placeholder="Ej: Bienvenido a Fun Fantasy"
+                        value={localCMS.home?.heroTitle || ''} 
+                        onChange={e => updateLocalField('home', 'heroTitle', e.target.value)}
+                        className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium" 
                       />
+                      <p className="text-[10px] text-on-surface-variant ml-1">El texto principal que aparece nada más entrar en la web.</p>
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase mb-1">Subtítulo Hero</label>
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Subtítulo Hero</label>
                       <textarea 
-                        defaultValue={siteContent.home?.heroSubtitle || 'Tu tienda de confianza de Final Fantasy'} 
-                        onBlur={e => handleSaveContent('home', { heroSubtitle: e.target.value })}
-                        className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm h-20 resize-none"
+                        placeholder="Ej: Tu tienda de confianza de Final Fantasy..."
+                        value={localCMS.home?.heroSubtitle || ''} 
+                        onChange={e => updateLocalField('home', 'heroSubtitle', e.target.value)}
+                        className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium h-24 resize-none"
                       ></textarea>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold uppercase mb-1">Texto Botón Noticia</label>
-                        <input 
-                          type="text" 
-                          defaultValue={siteContent.home?.newsButtonText || 'Ver Todas'} 
-                          onBlur={e => handleSaveContent('home', { newsButtonText: e.target.value })}
-                          className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm" 
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold uppercase mb-1">URL Botón Noticia</label>
-                        <input 
-                          type="text" 
-                          defaultValue={siteContent.home?.newsButtonUrl || '/noticias'} 
-                          onBlur={e => handleSaveContent('home', { newsButtonUrl: e.target.value })}
-                          className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm" 
-                        />
+                    <div className="bg-surface-container/50 p-6 rounded-3xl border border-outline-variant/20 space-y-4">
+                      <h4 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[16px]">ads_click</span>
+                        Sección de Noticias (Botón)
+                      </h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Texto del Botón</label>
+                          <input 
+                            type="text" 
+                            placeholder="Ej: Ver Todas"
+                            value={localCMS.home?.newsButtonText || ''} 
+                            onChange={e => updateLocalField('home', 'newsButtonText', e.target.value)}
+                            className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Enlace (URL)</label>
+                          <input 
+                            type="text" 
+                            placeholder="Ej: /noticias"
+                            value={localCMS.home?.newsButtonUrl || ''} 
+                            onChange={e => updateLocalField('home', 'newsButtonUrl', e.target.value)}
+                            className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
+                          />
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase mb-1">Título Sección Noticias</label>
-                      <input 
-                        type="text" 
-                        defaultValue={siteContent.home?.newsTitle || '¿Buscas las últimas noticias?'} 
-                        onBlur={e => handleSaveContent('home', { newsTitle: e.target.value })}
-                        className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm" 
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase mb-1">Descripción Sección Noticias</label>
-                      <textarea 
-                        defaultValue={siteContent.home?.newsDescription || 'Entérate de los nuevos lanzamientos de TCG y eventos de la comunidad.'} 
-                        onBlur={e => handleSaveContent('home', { newsDescription: e.target.value })}
-                        className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm h-20 resize-none"
-                      ></textarea>
+                    <div className="space-y-4">
+                      <h4 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[16px]">newspaper</span>
+                        Textos Sección Noticias
+                      </h4>
+                      <div className="space-y-2">
+                        <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Título Noticias</label>
+                        <input 
+                          type="text" 
+                          placeholder="Ej: ¿Buscas las últimas noticias?"
+                          value={localCMS.home?.newsTitle || ''} 
+                          onChange={e => updateLocalField('home', 'newsTitle', e.target.value)}
+                          className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Descripción Noticias</label>
+                        <textarea 
+                          placeholder="Ej: Entérate de los nuevos lanzamientos..."
+                          value={localCMS.home?.newsDescription || ''} 
+                          onChange={e => updateLocalField('home', 'newsDescription', e.target.value)}
+                          className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium h-20 resize-none"
+                        ></textarea>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Contact Page CMS */}
-              <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden flex flex-col">
-                <div className="p-6 border-b border-outline-variant/20 bg-surface-container/30">
-                  <h3 className="font-bold flex items-center gap-2">
-                    <span className="material-symbols-outlined text-primary">contact_support</span>
-                    Página de Contacto
-                  </h3>
-                </div>
-                <div className="p-6 space-y-4 flex-grow">
-                  <div className="grid grid-cols-1 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold uppercase mb-1">Título</label>
-                      <input 
-                        type="text" 
-                        defaultValue={siteContent.contacto?.title || 'Contacto'} 
-                        onBlur={e => handleSaveContent('contacto', { title: e.target.value })}
-                        className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm" 
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase mb-1">Email de Contacto</label>
-                      <input 
-                        type="email" 
-                        defaultValue={siteContent.contacto?.email || 'hola@funfantasy.es'} 
-                        onBlur={e => handleSaveContent('contacto', { email: e.target.value })}
-                        className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm" 
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase mb-1">Teléfono</label>
-                      <input 
-                        type="text" 
-                        defaultValue={siteContent.contacto?.phone || '+34 600 000 000'} 
-                        onBlur={e => handleSaveContent('contacto', { phone: e.target.value })}
-                        className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm" 
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase mb-1">Dirección / Ubicación</label>
-                      <input 
-                        type="text" 
-                        defaultValue={siteContent.contacto?.location || 'Madrid, España'} 
-                        onBlur={e => handleSaveContent('contacto', { location: e.target.value })}
-                        className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm" 
-                      />
+              <div className="space-y-8">
+                {/* Contact Page CMS */}
+                <div className="bg-surface-container-lowest rounded-[2.5rem] border border-outline-variant/30 shadow-sm overflow-hidden flex flex-col group hover:border-primary/30 transition-all">
+                  <div className="p-8 border-b border-outline-variant/20 bg-surface-container/30 flex items-center justify-between">
+                    <h3 className="font-black flex items-center gap-3 text-lg">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                        <span className="material-symbols-outlined">contact_support</span>
+                      </div>
+                      Página de Contacto
+                    </h3>
+                    <button 
+                      onClick={() => handleSaveContent('contacto')}
+                      className="flex items-center gap-2 px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">save</span>
+                      Guardar Contacto
+                    </button>
+                  </div>
+                  <div className="p-8 space-y-6 flex-grow">
+                    <div className="grid grid-cols-1 gap-6">
+                      <div className="space-y-2">
+                        <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Título de la Página</label>
+                        <input 
+                          type="text" 
+                          value={localCMS.contacto?.title || ''} 
+                          onChange={e => updateLocalField('contacto', 'title', e.target.value)}
+                          className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium" 
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Email Público</label>
+                          <input 
+                            type="email" 
+                            value={localCMS.contacto?.email || ''} 
+                            onChange={e => updateLocalField('contacto', 'email', e.target.value)}
+                            className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Teléfono</label>
+                          <input 
+                            type="text" 
+                            value={localCMS.contacto?.phone || ''} 
+                            onChange={e => updateLocalField('contacto', 'phone', e.target.value)}
+                            className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Ubicación / Dirección</label>
+                        <input 
+                          type="text" 
+                          value={localCMS.contacto?.location || ''} 
+                          onChange={e => updateLocalField('contacto', 'location', e.target.value)}
+                          className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium" 
+                        />
+                        <p className="text-[10px] text-on-surface-variant ml-1">Esta dirección se usará para generar el mapa de Google en la página de contacto.</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Home Page Media */}
-              <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden flex flex-col lg:col-span-2">
-                <div className="p-6 border-b border-outline-variant/20 bg-surface-container/30">
-                  <h3 className="font-bold flex items-center gap-2">
-                    <span className="material-symbols-outlined text-primary">image</span>
-                    Imágenes y Multimedia
-                  </h3>
-                </div>
-                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-4">
-                    <h4 className="font-bold text-sm uppercase text-on-surface-variant">Hero de Inicio</h4>
-                    {siteContent.home?.heroImage && (
-                      <div className="aspect-video w-full rounded-xl overflow-hidden border border-outline-variant/30">
-                        <img src={siteContent.home.heroImage} alt="Hero" className="w-full h-full object-cover" />
+                {/* Media Management */}
+                <div className="bg-surface-container-lowest rounded-[2.5rem] border border-outline-variant/30 shadow-sm overflow-hidden flex flex-col group hover:border-primary/30 transition-all">
+                  <div className="p-8 border-b border-outline-variant/20 bg-surface-container/30">
+                    <h3 className="font-black flex items-center gap-3 text-lg">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                        <span className="material-symbols-outlined">image</span>
                       </div>
-                    )}
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={e => e.target.files && handleCMSImageUpload('home', 'heroImage', e.target.files[0])}
-                      className="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
-                    />
+                      Imágenes y Multimedia
+                    </h3>
                   </div>
-                  <div className="space-y-4">
-                    <h4 className="font-bold text-sm uppercase text-on-surface-variant">Banner de Noticias</h4>
-                    {siteContent.home?.newsBannerImage && (
-                      <div className="aspect-video w-full rounded-xl overflow-hidden border border-outline-variant/30">
-                        <img src={siteContent.home.newsBannerImage} alt="News Banner" className="w-full h-full object-cover" />
+                  <div className="p-8 space-y-8 flex-grow">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-black text-xs uppercase tracking-widest text-on-surface-variant">Imagen Hero (Inicio)</h4>
+                          <p className="text-[10px] text-on-surface-variant">Imagen de fondo principal de la home.</p>
+                        </div>
+                        <label className="cursor-pointer px-4 py-2 bg-primary/10 text-primary rounded-xl font-bold text-xs hover:bg-primary/20 transition-all flex items-center gap-2">
+                          <span className="material-symbols-outlined text-[16px]">upload</span>
+                          Subir Nueva
+                          <input 
+                            type="file" 
+                            className="hidden" 
+                            accept="image/*" 
+                            onChange={e => e.target.files && handleCMSImageUpload('home', 'heroImage', e.target.files[0])}
+                          />
+                        </label>
                       </div>
-                    )}
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={e => e.target.files && handleCMSImageUpload('home', 'newsBannerImage', e.target.files[0])}
-                      className="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
-                    />
+                      <div className="aspect-video w-full rounded-2xl overflow-hidden border border-outline-variant/30 bg-surface-container flex items-center justify-center relative">
+                        {localCMS.home?.heroImage ? (
+                          <img src={localCMS.home.heroImage} alt="Preview Hero" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="flex flex-col items-center gap-2 text-on-surface-variant/40">
+                            <span className="material-symbols-outlined text-4xl">image</span>
+                            <span className="text-xs font-bold">Sin Imagen</span>
+                          </div>
+                        )}
+                        <div className="absolute top-3 left-3 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black text-white uppercase tracking-widest border border-white/20">
+                          Vista Previa
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-black text-xs uppercase tracking-widest text-on-surface-variant">Banner de Noticias</h4>
+                          <p className="text-[10px] text-on-surface-variant">Imagen destacada en el banner de noticias de la home.</p>
+                        </div>
+                        <label className="cursor-pointer px-4 py-2 bg-primary/10 text-primary rounded-xl font-bold text-xs hover:bg-primary/20 transition-all flex items-center gap-2">
+                          <span className="material-symbols-outlined text-[16px]">upload</span>
+                          Subir Nueva
+                          <input 
+                            type="file" 
+                            className="hidden" 
+                            accept="image/*" 
+                            onChange={e => e.target.files && handleCMSImageUpload('home', 'newsBannerImage', e.target.files[0])}
+                          />
+                        </label>
+                      </div>
+                      <div className="aspect-video w-full rounded-2xl overflow-hidden border border-outline-variant/30 bg-surface-container flex items-center justify-center relative">
+                        {localCMS.home?.newsBannerImage ? (
+                          <img src={localCMS.home.newsBannerImage} alt="Preview Banner" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="flex flex-col items-center gap-2 text-on-surface-variant/40">
+                            <span className="material-symbols-outlined text-4xl">image</span>
+                            <span className="text-xs font-bold">Sin Imagen</span>
+                          </div>
+                        )}
+                        <div className="absolute top-3 left-3 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black text-white uppercase tracking-widest border border-white/20">
+                          Vista Previa
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
             
-            <div className="p-6 bg-primary/5 border border-primary/20 rounded-2xl">
-              <p className="text-sm text-primary flex items-center gap-2">
-                <span className="material-symbols-outlined text-[18px]">info</span>
-                Los cambios se guardan automáticamente al perder el foco (onBlur) en cada campo. Las imágenes se guardan al seleccionarlas.
-              </p>
+            <div className="p-8 bg-primary/5 border border-primary/20 rounded-[2.5rem] flex items-center gap-6">
+              <div className="w-14 h-14 rounded-2xl bg-primary/20 text-primary flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-3xl">info</span>
+              </div>
+              <div>
+                <p className="text-sm text-on-surface font-bold">Sugerencia de Calidad</p>
+                <p className="text-xs text-on-surface-variant mt-1">Para obtener los mejores resultados visuales, utiliza imágenes en alta resolución y asegúrate de hacer clic en el botón "Guardar" de cada sección después de realizar cambios en los textos.</p>
+              </div>
             </div>
           </div>
         );
