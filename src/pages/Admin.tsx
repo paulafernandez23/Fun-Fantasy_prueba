@@ -64,6 +64,15 @@ function AdminContent() {
   const [productSearch, setProductSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('Todas');
   const [stockFilter, setStockFilter] = useState('Todos');
+
+  // New CMS and Categories States
+  const [siteContent, setSiteContent] = useState<Record<string, any>>({});
+  const [contentLoading, setContentLoading] = useState(false);
+  const [allCategories, setAllCategories] = useState<any[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<any | null>(null);
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [newCategory, setNewCategory] = useState({ name: '', subcategories: '' }); // subcategories as comma separated string
   
   // Custom Confirm/Alert Modal State
   const [modal, setModal] = useState<{ show: boolean; title: string; message: string; onConfirm?: () => void; type: 'confirm' | 'alert' }>({
@@ -107,6 +116,18 @@ function AdminContent() {
     // Cargar mensajes para notificaciones
     getDocs(query(collection(db, 'contact_messages'), orderBy('timestamp', 'desc')))
       .then(snap => setAllMessages(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
+
+    // Cargar categorías
+    getDocs(collection(db, 'categories'))
+      .then(snap => setAllCategories(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
+
+    // Cargar contenido web
+    getDocs(collection(db, 'site_content'))
+      .then(snap => {
+        const content: Record<string, any> = {};
+        snap.docs.forEach(doc => { content[doc.id] = doc.data(); });
+        setSiteContent(content);
+      });
   };
 
   useEffect(() => {
@@ -143,6 +164,22 @@ function AdminContent() {
       getDocs(collection(db, 'legal_pages'))
         .then(snap => setLegalPages(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))))
         .finally(() => setPagesLoading(false));
+    }
+    if (activeTab === 'categorias') {
+      setCategoriesLoading(true);
+      getDocs(collection(db, 'categories'))
+        .then(snap => setAllCategories(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))))
+        .finally(() => setCategoriesLoading(false));
+    }
+    if (activeTab === 'contenido') {
+      setContentLoading(true);
+      getDocs(collection(db, 'site_content'))
+        .then(snap => {
+          const content: Record<string, any> = {};
+          snap.docs.forEach(doc => { content[doc.id] = doc.data(); });
+          setSiteContent(content);
+        })
+        .finally(() => setContentLoading(false));
     }
   }, [activeTab]);
 
@@ -229,7 +266,20 @@ function AdminContent() {
   // Form for New/Edit Product
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
-  const [newProduct, setNewProduct] = useState({ title: '', category: '', price: '', stock: '', type: 'cartas', description: '', tags: '', expansion: '', image_url: '', isFeatured: false, sizes: { S: 0, M: 0, L: 0, XL: 0, XXL: 0 } as Record<string, number> });
+  const [newProduct, setNewProduct] = useState({ 
+    title: '', 
+    category: '', 
+    subcategory: '',
+    price: '', 
+    stock: '', 
+    type: 'cartas', 
+    description: '', 
+    tags: '', 
+    expansion: '', 
+    image_url: '', 
+    isFeatured: false, 
+    sizes: { S: 0, M: 0, L: 0, XL: 0, XXL: 0 } as Record<string, number> 
+  });
   const [newImage, setNewImage] = useState<File | null>(null);
   const [productError, setProductError] = useState('');
 
@@ -342,7 +392,8 @@ function AdminContent() {
         tags: tagsArray,
         expansion: newProduct.type === 'cartas' ? newProduct.expansion : '',
         isFeatured: newProduct.isFeatured || false,
-        sizes: isClothing ? newProduct.sizes : {}
+        sizes: isClothing ? newProduct.sizes : {},
+        subcategory: newProduct.subcategory || ''
       };
 
       if (editingProductId) {
@@ -356,7 +407,7 @@ function AdminContent() {
 
       setShowAddProduct(false);
       setEditingProductId(null);
-      setNewProduct({ title: '', category: '', price: '', stock: '', type: 'cartas', description: '', tags: '', expansion: '', image_url: '', isFeatured: false, sizes: { S: 0, M: 0, L: 0, XL: 0, XXL: 0 } as Record<string, number> });
+      setNewProduct({ title: '', category: '', subcategory: '', price: '', stock: '', type: 'cartas', description: '', tags: '', expansion: '', image_url: '', isFeatured: false, sizes: { S: 0, M: 0, L: 0, XL: 0, XXL: 0 } as Record<string, number> });
       setNewImage(null);
       showAlert('Éxito', 'Producto guardado correctamente.');
     } catch (error: any) {
@@ -424,6 +475,151 @@ function AdminContent() {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     }, 1000);
+  };
+
+  const handleCategoryAction = async () => {
+    if (!newCategory.name) return;
+    setIsSaving(true);
+    try {
+      const categoryData = {
+        name: newCategory.name,
+        subcategories: newCategory.subcategories.split(',').map(s => s.trim()).filter(s => s !== '')
+      };
+
+      if (editingCategory) {
+        await updateDoc(doc(db, 'categories', editingCategory.id), categoryData);
+      } else {
+        await addDoc(collection(db, 'categories'), categoryData);
+      }
+
+      const snap = await getDocs(collection(db, 'categories'));
+      setAllCategories(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      
+      setShowAddCategory(false);
+      setEditingCategory(null);
+      setNewCategory({ name: '', subcategories: '' });
+      showAlert('Éxito', 'Categoría guardada correctamente.');
+    } catch (error) {
+      console.error(error);
+      showAlert('Error', 'No se pudo guardar la categoría.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleBulkUpload = async (file: File) => {
+    setIsSaving(true);
+    const reader = new FileReader();
+    
+    reader.onload = async (e) => {
+      const content = e.target?.result as string;
+      let products: any[] = [];
+
+      try {
+        if (file.name.endsWith('.json')) {
+          products = JSON.parse(content);
+        } else if (file.name.endsWith('.csv')) {
+          const lines = content.split('\n');
+          const headers = lines[0].split(',').map(h => h.trim());
+          products = lines.slice(1).filter(l => l.trim()).map(line => {
+            const values = line.split(',').map(v => v.trim());
+            const obj: any = {};
+            headers.forEach((h, i) => { obj[h] = values[i]; });
+            return obj;
+          });
+        } else if (file.name.endsWith('.xml')) {
+          const parser = new DOMParser();
+          const xmlDoc = parser.parseFromString(content, "text/xml");
+          const items = xmlDoc.getElementsByTagName("product");
+          for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            const obj: any = {};
+            for (let j = 0; j < item.children.length; j++) {
+              obj[item.children[j].tagName] = item.children[j].textContent;
+            }
+            products.push(obj);
+          }
+        }
+
+        // Upsert Logic
+        let updatedCount = 0;
+        let createdCount = 0;
+
+        for (const pData of products) {
+          if (!pData.title) continue;
+          
+          // Try to find by title to avoid duplicates
+          const q = query(collection(db, 'products'), where('title', '==', pData.title));
+          const querySnap = await getDocs(q);
+          
+          const cleanData = {
+            ...pData,
+            price: Number(pData.price) || 0,
+            stock: Number(pData.stock) || 0,
+            isFeatured: pData.isFeatured === 'true' || pData.isFeatured === true,
+            updated_at: Timestamp.now()
+          };
+
+          if (!querySnap.empty) {
+            // Update
+            await updateDoc(doc(db, 'products', querySnap.docs[0].id), cleanData);
+            updatedCount++;
+          } else {
+            // Create
+            await addDoc(collection(db, 'products'), {
+              ...cleanData,
+              created_at: Timestamp.now()
+            });
+            createdCount++;
+          }
+        }
+
+        loadData();
+        showAlert('Carga Completada', `Se han creado ${createdCount} productos y actualizado ${updatedCount}.`);
+      } catch (err) {
+        console.error(err);
+        showAlert('Error', 'Hubo un problema procesando el archivo.');
+      } finally {
+        setIsSaving(false);
+      }
+    };
+
+    reader.readAsText(file);
+  };
+
+  const handleSaveContent = async (pageId: string, data: any) => {
+    setIsSaving(true);
+    try {
+      await setDoc(doc(db, 'site_content', pageId), data, { merge: true });
+      setSiteContent(prev => ({ 
+        ...prev, 
+        [pageId]: { ...(prev[pageId] || {}), ...data } 
+      }));
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (error) {
+      console.error(error);
+      showAlert('Error', 'No se pudo guardar el contenido.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCMSImageUpload = async (pageId: string, field: string, file: File) => {
+    setIsSaving(true);
+    try {
+      const storageRef = ref(storage, `cms/${pageId}_${field}_${Date.now()}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      
+      await handleSaveContent(pageId, { [field]: url });
+      showAlert('Imagen Subida', 'La imagen se ha actualizado correctamente.');
+    } catch (error) {
+      console.error(error);
+      showAlert('Error', 'No se pudo subir la imagen.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const renderContent = () => {
@@ -662,18 +858,34 @@ function AdminContent() {
                   <h2 className="font-bold text-lg">Gestión de Productos</h2>
                   <p className="text-sm text-on-surface-variant">Inventario total: {allProducts.length}</p>
                 </div>
-                <button 
-                  onClick={() => {
-                    setEditingProductId(null);
-                    setNewProduct({ title: '', category: '', price: '', stock: '', type: 'cartas', description: '', tags: '', image_url: '', isFeatured: false, sizes: { S: 0, M: 0, L: 0, XL: 0, XXL: 0 } as Record<string, number> });
-                    setNewImage(null);
-                    setShowAddProduct(true);
-                  }} 
-                  className="px-4 py-2 bg-primary text-on-primary rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center gap-2 text-sm shrink-0"
-                >
-                  <span className="material-symbols-outlined text-[18px]">add</span>
-                  Añadir Producto
-                </button>
+                <div className="flex flex-wrap gap-3">
+                  <input 
+                    type="file" 
+                    id="bulk-upload" 
+                    className="hidden" 
+                    accept=".csv,.json,.xml" 
+                    onChange={e => e.target.files && handleBulkUpload(e.target.files[0])} 
+                  />
+                  <label 
+                    htmlFor="bulk-upload" 
+                    className="flex items-center gap-2 px-4 py-2 bg-secondary/10 text-secondary border border-secondary/20 rounded-xl font-bold hover:bg-secondary/20 transition-all cursor-pointer text-sm"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">upload_file</span>
+                    Carga Masiva
+                  </label>
+                  <button 
+                    onClick={() => {
+                      setEditingProductId(null);
+                      setNewProduct({ title: '', category: '', subcategory: '', price: '', stock: '', type: 'cartas', description: '', tags: '', image_url: '', isFeatured: false, sizes: { S: 0, M: 0, L: 0, XL: 0, XXL: 0 } as Record<string, number> });
+                      setNewImage(null);
+                      setShowAddProduct(true);
+                    }} 
+                    className="px-4 py-2 bg-primary text-on-primary rounded-lg font-bold hover:bg-primary/90 transition-colors flex items-center gap-2 text-sm shrink-0"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">add</span>
+                    Añadir Producto
+                  </button>
+                </div>
               </div>
 
               {/* Advanced Filters */}
@@ -715,7 +927,32 @@ function AdminContent() {
                 <h3 className="font-bold mb-4">{editingProductId ? 'Editar Producto' : 'Añadir Nuevo Producto'}</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <input type="text" placeholder="Título" value={newProduct.title} onChange={e => setNewProduct({...newProduct, title: e.target.value})} className="px-3 py-2 rounded bg-surface-container border border-outline-variant/30" />
-                  <input type="text" placeholder="Categoría" value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className="px-3 py-2 rounded bg-surface-container border border-outline-variant/30" />
+                  <select 
+                    value={newProduct.category} 
+                    onChange={e => setNewProduct({...newProduct, category: e.target.value, subcategory: ''})} 
+                    className="px-3 py-2 rounded bg-surface-container border border-outline-variant/30"
+                  >
+                    <option value="">Seleccionar Categoría</option>
+                    {allCategories.map(cat => (
+                      <option key={cat.id} value={cat.name}>{cat.name}</option>
+                    ))}
+                  </select>
+
+                  {newProduct.category && allCategories.find(c => c.name === newProduct.category)?.subcategories?.length > 0 && (
+                    <div className="col-span-2">
+                      <label className="block text-[10px] font-bold uppercase mb-1 ml-1 text-on-surface-variant">Subcategoría</label>
+                      <select 
+                        value={newProduct.subcategory} 
+                        onChange={e => setNewProduct({...newProduct, subcategory: e.target.value})} 
+                        className="w-full px-3 py-2 rounded bg-surface-container border border-outline-variant/30"
+                      >
+                        <option value="">Seleccionar Subcategoría (Opcional)</option>
+                        {allCategories.find(c => c.name === newProduct.category)?.subcategories?.map((sub: string) => (
+                          <option key={sub} value={sub}>{sub}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   <input type="number" placeholder="Precio" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className="px-3 py-2 rounded bg-surface-container border border-outline-variant/30" />
                   
                   {newProduct.category.toLowerCase() !== 'ropa' && (
@@ -820,7 +1057,8 @@ function AdminContent() {
                             expansion: prod.expansion || '',
                             image_url: prod.image_url || '',
                             isFeatured: prod.isFeatured || false,
-                            sizes: prod.sizes && Object.keys(prod.sizes).length > 0 ? prod.sizes : { S: 0, M: 0, L: 0, XL: 0, XXL: 0 }
+                            sizes: prod.sizes && Object.keys(prod.sizes).length > 0 ? prod.sizes : { S: 0, M: 0, L: 0, XL: 0, XXL: 0 },
+                            subcategory: prod.subcategory || ''
                           });
                           setShowAddProduct(true);
                           window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1418,6 +1656,291 @@ function AdminContent() {
             )}
           </div>
         );
+      case 'categorias':
+        return (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Gestión de Categorías</h2>
+              <button 
+                onClick={() => { setShowAddCategory(true); setEditingCategory(null); setNewCategory({ name: '', subcategories: '' }); }}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-colors shadow-lg"
+              >
+                <span className="material-symbols-outlined">add</span>
+                Nueva Categoría
+              </button>
+            </div>
+
+            {showAddCategory && (
+              <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/30 shadow-md animate-in fade-in slide-in-from-top-4 duration-300">
+                <h3 className="font-bold mb-4">{editingCategory ? 'Editar Categoría' : 'Añadir Categoría'}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase mb-1">Nombre</label>
+                    <input 
+                      type="text" 
+                      value={newCategory.name} 
+                      onChange={e => setNewCategory({...newCategory, name: e.target.value})}
+                      placeholder="Ej: TCG, Merchandising..."
+                      className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase mb-1">Subcategorías (separadas por coma)</label>
+                    <input 
+                      type="text" 
+                      value={newCategory.subcategories} 
+                      onChange={e => setNewCategory({...newCategory, subcategories: e.target.value})}
+                      placeholder="Ej: Cartas Sueltas, Sobres, Accesorios..."
+                      className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3">
+                  <button onClick={() => setShowAddCategory(false)} className="px-4 py-2 text-on-surface-variant font-bold hover:bg-surface-container rounded-lg transition-colors">Cancelar</button>
+                  <button onClick={handleCategoryAction} disabled={isSaving} className="px-6 py-2 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 transition-colors disabled:opacity-50">
+                    {isSaving ? 'Guardando...' : 'Guardar'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-surface-container/50 text-on-surface-variant text-xs font-bold uppercase">
+                    <tr>
+                      <th className="px-6 py-4">Nombre</th>
+                      <th className="px-6 py-4">Subcategorías</th>
+                      <th className="px-6 py-4 text-right">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-outline-variant/10">
+                    {allCategories.length === 0 ? (
+                      <tr><td colSpan={3} className="px-6 py-12 text-center text-on-surface-variant italic">No hay categorías configuradas.</td></tr>
+                    ) : (
+                      allCategories.map(cat => (
+                        <tr key={cat.id} className="hover:bg-surface-container/30 transition-colors group">
+                          <td className="px-6 py-4 font-bold">{cat.name}</td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-wrap gap-1">
+                              {cat.subcategories?.map((sub: string, i: number) => (
+                                <span key={i} className="px-2 py-0.5 bg-surface-container border border-outline-variant/30 rounded text-[10px] font-bold uppercase">{sub}</span>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex justify-end gap-2">
+                              <button 
+                                onClick={() => {
+                                  setEditingCategory(cat);
+                                  setNewCategory({ name: cat.name, subcategories: cat.subcategories?.join(', ') || '' });
+                                  setShowAddCategory(true);
+                                }}
+                                className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                              >
+                                <span className="material-symbols-outlined text-[20px]">edit</span>
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  setModal({
+                                    show: true,
+                                    title: 'Eliminar Categoría',
+                                    message: `¿Estás seguro de que quieres eliminar la categoría "${cat.name}"? Esto no afectará a los productos pero perderán su clasificación.`,
+                                    type: 'confirm',
+                                    onConfirm: async () => {
+                                      await deleteDoc(doc(db, 'categories', cat.id));
+                                      setAllCategories(prev => prev.filter(c => c.id !== cat.id));
+                                    }
+                                  });
+                                }}
+                                className="p-2 text-error hover:bg-error/10 rounded-lg transition-colors"
+                              >
+                                <span className="material-symbols-outlined text-[20px]">delete</span>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+      case 'contenido':
+        return (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">Personalización de Contenido Web</h2>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Home Page CMS */}
+              <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden flex flex-col">
+                <div className="p-6 border-b border-outline-variant/20 bg-surface-container/30">
+                  <h3 className="font-bold flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary">home</span>
+                    Página de Inicio (Home)
+                  </h3>
+                </div>
+                <div className="p-6 space-y-4 flex-grow">
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase mb-1">Título Hero</label>
+                      <input 
+                        type="text" 
+                        defaultValue={siteContent.home?.heroTitle || 'Bienvenido a Fun Fantasy'} 
+                        onBlur={e => handleSaveContent('home', { heroTitle: e.target.value })}
+                        className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase mb-1">Subtítulo Hero</label>
+                      <textarea 
+                        defaultValue={siteContent.home?.heroSubtitle || 'Tu tienda de confianza de Final Fantasy'} 
+                        onBlur={e => handleSaveContent('home', { heroSubtitle: e.target.value })}
+                        className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm h-20 resize-none"
+                      ></textarea>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold uppercase mb-1">Texto Botón Noticia</label>
+                        <input 
+                          type="text" 
+                          defaultValue={siteContent.home?.newsButtonText || 'Ver Todas'} 
+                          onBlur={e => handleSaveContent('home', { newsButtonText: e.target.value })}
+                          className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm" 
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold uppercase mb-1">URL Botón Noticia</label>
+                        <input 
+                          type="text" 
+                          defaultValue={siteContent.home?.newsButtonUrl || '/noticias'} 
+                          onBlur={e => handleSaveContent('home', { newsButtonUrl: e.target.value })}
+                          className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm" 
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase mb-1">Título Sección Noticias</label>
+                      <input 
+                        type="text" 
+                        defaultValue={siteContent.home?.newsTitle || '¿Buscas las últimas noticias?'} 
+                        onBlur={e => handleSaveContent('home', { newsTitle: e.target.value })}
+                        className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase mb-1">Descripción Sección Noticias</label>
+                      <textarea 
+                        defaultValue={siteContent.home?.newsDescription || 'Entérate de los nuevos lanzamientos de TCG y eventos de la comunidad.'} 
+                        onBlur={e => handleSaveContent('home', { newsDescription: e.target.value })}
+                        className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm h-20 resize-none"
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Page CMS */}
+              <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden flex flex-col">
+                <div className="p-6 border-b border-outline-variant/20 bg-surface-container/30">
+                  <h3 className="font-bold flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary">contact_support</span>
+                    Página de Contacto
+                  </h3>
+                </div>
+                <div className="p-6 space-y-4 flex-grow">
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase mb-1">Título</label>
+                      <input 
+                        type="text" 
+                        defaultValue={siteContent.contacto?.title || 'Contacto'} 
+                        onBlur={e => handleSaveContent('contacto', { title: e.target.value })}
+                        className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase mb-1">Email de Contacto</label>
+                      <input 
+                        type="email" 
+                        defaultValue={siteContent.contacto?.email || 'hola@funfantasy.es'} 
+                        onBlur={e => handleSaveContent('contacto', { email: e.target.value })}
+                        className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase mb-1">Teléfono</label>
+                      <input 
+                        type="text" 
+                        defaultValue={siteContent.contacto?.phone || '+34 600 000 000'} 
+                        onBlur={e => handleSaveContent('contacto', { phone: e.target.value })}
+                        className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase mb-1">Dirección / Ubicación</label>
+                      <input 
+                        type="text" 
+                        defaultValue={siteContent.contacto?.location || 'Madrid, España'} 
+                        onBlur={e => handleSaveContent('contacto', { location: e.target.value })}
+                        className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm" 
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Home Page Media */}
+              <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden flex flex-col lg:col-span-2">
+                <div className="p-6 border-b border-outline-variant/20 bg-surface-container/30">
+                  <h3 className="font-bold flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary">image</span>
+                    Imágenes y Multimedia
+                  </h3>
+                </div>
+                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <h4 className="font-bold text-sm uppercase text-on-surface-variant">Hero de Inicio</h4>
+                    {siteContent.home?.heroImage && (
+                      <div className="aspect-video w-full rounded-xl overflow-hidden border border-outline-variant/30">
+                        <img src={siteContent.home.heroImage} alt="Hero" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={e => e.target.files && handleCMSImageUpload('home', 'heroImage', e.target.files[0])}
+                      className="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
+                    />
+                  </div>
+                  <div className="space-y-4">
+                    <h4 className="font-bold text-sm uppercase text-on-surface-variant">Banner de Noticias</h4>
+                    {siteContent.home?.newsBannerImage && (
+                      <div className="aspect-video w-full rounded-xl overflow-hidden border border-outline-variant/30">
+                        <img src={siteContent.home.newsBannerImage} alt="News Banner" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={e => e.target.files && handleCMSImageUpload('home', 'newsBannerImage', e.target.files[0])}
+                      className="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-6 bg-primary/5 border border-primary/20 rounded-2xl">
+              <p className="text-sm text-primary flex items-center gap-2">
+                <span className="material-symbols-outlined text-[18px]">info</span>
+                Los cambios se guardan automáticamente al perder el foco (onBlur) en cada campo. Las imágenes se guardan al seleccionarlas.
+              </p>
+            </div>
+          </div>
+        );
       case 'configuracion':
         return (
           <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden max-w-2xl">
@@ -1445,6 +1968,8 @@ function AdminContent() {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
     { id: 'productos', label: 'Productos', icon: 'inventory_2' },
+    { id: 'categorias', label: 'Categorías', icon: 'category' },
+    { id: 'contenido', label: 'Contenido Web', icon: 'edit_note' },
     { id: 'pedidos', label: 'Pedidos', icon: 'shopping_bag' },
     { id: 'mensajes', label: 'Mensajes', icon: 'forum' },
     { id: 'citas', label: 'Citas', icon: 'event' },

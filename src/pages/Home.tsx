@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { db } from '../lib/firebase';
-import { collection, query, limit, getDocs, where } from 'firebase/firestore';
+import { collection, query, limit, getDocs, where, doc, getDoc } from 'firebase/firestore';
 import { useSettingsStore } from '../store/settingsStore';
 import { translations } from '../lib/translations';
 import ProductCard from '../components/ProductCard';
@@ -19,6 +19,7 @@ export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [siteContent, setSiteContent] = useState<any>(null);
 
   // Newsletter state
   const [newsletterEmail, setNewsletterEmail] = useState('');
@@ -68,7 +69,19 @@ export default function Home() {
       }
     };
 
+    const fetchContent = async () => {
+      try {
+        const docSnap = await getDoc(doc(db, 'site_content', 'home'));
+        if (docSnap.exists()) {
+          setSiteContent(docSnap.data());
+        }
+      } catch (error) {
+        console.error('Error fetching content:', error);
+      }
+    };
+
     fetchProducts();
+    fetchContent();
     
     // SEO
     updateMetaTags({
@@ -94,7 +107,7 @@ export default function Home() {
       <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-primary-container/20 to-background"></div>
         <img 
-          src="https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=2000" 
+          src={siteContent?.heroImage || "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=2000"} 
           alt="Fantasy World" 
           className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-30 scale-105 animate-slow-zoom" 
         />
@@ -105,10 +118,10 @@ export default function Home() {
             {t.home.featured}
           </div>
           <h1 className="font-headline text-5xl md:text-8xl font-black text-on-background mb-8 tracking-tight leading-[1.1]">
-            {t.home.heroTitle}
+            {siteContent?.heroTitle || t.home.heroTitle}
           </h1>
           <p className="text-xl md:text-2xl text-on-surface-variant mb-12 max-w-2xl mx-auto font-medium">
-            {t.home.heroSubtitle}
+            {siteContent?.heroSubtitle || t.home.heroSubtitle}
           </p>
           
           {/* Search Bar */}
@@ -162,15 +175,19 @@ export default function Home() {
         <div className="relative rounded-[3rem] overflow-hidden bg-primary p-12 md:p-20 flex flex-col md:flex-row items-center justify-between gap-12 group">
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
           <div className="relative z-10 max-w-xl text-center md:text-left">
-            <h2 className="text-4xl md:text-5xl font-black text-on-primary mb-6 leading-tight">¿Buscas las últimas noticias?</h2>
-            <p className="text-on-primary/80 text-xl mb-10 font-medium">Entérate de los nuevos lanzamientos de TCG y eventos de la comunidad.</p>
-            <Link to="/noticias" className="inline-flex items-center justify-center px-10 py-5 bg-on-primary text-primary rounded-2xl font-bold text-lg hover:bg-surface transition-all transform hover:scale-105 shadow-2xl">
-              Ir a Noticias
+            <h2 className="text-4xl md:text-5xl font-black text-on-primary mb-6 leading-tight">
+              {siteContent?.newsTitle || "¿Buscas las últimas noticias?"}
+            </h2>
+            <p className="text-on-primary/80 text-xl mb-10 font-medium">
+              {siteContent?.newsDescription || "Entérate de los nuevos lanzamientos de TCG y eventos de la comunidad."}
+            </p>
+            <Link to={siteContent?.newsButtonUrl || "/noticias"} className="inline-flex items-center justify-center px-10 py-5 bg-on-primary text-primary rounded-2xl font-bold text-lg hover:bg-surface transition-all transform hover:scale-105 shadow-2xl">
+              {siteContent?.newsButtonText || "Ir a Noticias"}
               <span className="material-symbols-outlined ml-2">newspaper</span>
             </Link>
           </div>
           <div className="relative z-10 w-full max-w-md aspect-video bg-on-primary/10 backdrop-blur-md rounded-3xl border border-on-primary/20 flex items-center justify-center overflow-hidden">
-             <img src={newsBanner} alt="News Preview" className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-700" />
+             <img src={siteContent?.newsBannerImage || newsBanner} alt="News Preview" className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-700" />
              <div className="absolute inset-0 flex items-center justify-center">
                 <span className="material-symbols-outlined text-on-primary text-6xl opacity-50">play_circle</span>
              </div>

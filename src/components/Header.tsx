@@ -2,6 +2,9 @@ import { Link } from 'react-router-dom';
 import { useCartStore } from '../store/cartStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { translations } from '../lib/translations';
+import { db } from '../lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
 
 export default function Header() {
   const language = useSettingsStore(state => state.language);
@@ -17,6 +20,14 @@ export default function Header() {
   const items = useCartStore(state => state.items);
   const cartCount = items.reduce((acc, item) => acc + item.quantity, 0);
 
+  const [categories, setCategories] = useState<any[]>([]);
+
+  useEffect(() => {
+    getDocs(collection(db, 'categories')).then(snap => {
+      setCategories(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+  }, []);
+
   return (
     <header className="glass-panel sticky top-0 z-50 border-b border-outline-variant/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -27,8 +38,22 @@ export default function Header() {
         
         <nav className="hidden md:flex gap-6">
           <Link to="/" className="text-on-surface-variant hover:text-primary transition-colors font-medium">{t.nav.home}</Link>
-          <Link to="/cartas" className="text-on-surface-variant hover:text-primary transition-colors font-medium">{t.nav.tcg}</Link>
-          <Link to="/merchandising" className="text-on-surface-variant hover:text-primary transition-colors font-medium">{t.nav.merch}</Link>
+          {categories.length > 0 ? (
+            categories.map(cat => (
+              <Link 
+                key={cat.id} 
+                to={`/productos?category=${cat.name}`} 
+                className="text-on-surface-variant hover:text-primary transition-colors font-medium"
+              >
+                {cat.name}
+              </Link>
+            ))
+          ) : (
+            <>
+              <Link to="/cartas" className="text-on-surface-variant hover:text-primary transition-colors font-medium">{t.nav.tcg}</Link>
+              <Link to="/merchandising" className="text-on-surface-variant hover:text-primary transition-colors font-medium">{t.nav.merch}</Link>
+            </>
+          )}
           <Link to="/noticias" className="text-on-surface-variant hover:text-primary transition-colors font-medium">{t.nav.news || 'Noticias'}</Link>
           <Link to="/contacto" className="text-on-surface-variant hover:text-primary transition-colors font-medium">{t.nav.contact}</Link>
         </nav>

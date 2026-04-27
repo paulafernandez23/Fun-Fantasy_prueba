@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSettingsStore } from '../store/settingsStore';
 import { translations } from '../lib/translations';
 import { Link } from 'react-router-dom';
-import { addDoc, collection, Timestamp } from 'firebase/firestore';
+import { addDoc, collection, Timestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { updateMetaTags } from '../lib/seoUtils';
 import { sendContactNotification } from '../lib/emailService';
@@ -22,6 +22,7 @@ export default function Contacto() {
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [siteContent, setSiteContent] = useState<any>(null);
 
   useEffect(() => {
     updateMetaTags({
@@ -29,6 +30,18 @@ export default function Contacto() {
       description: '¿Tienes dudas sobre cartas TCG o merchandising de Final Fantasy? Contacta con nuestro equipo de expertos. Estamos en Murcia, España.',
       keywords: 'Contacto, Soporte, Final Fantasy Store, Murcia, Ayuda TCG'
     });
+
+    const fetchContent = async () => {
+      try {
+        const docSnap = await getDoc(doc(db, 'site_content', 'contacto'));
+        if (docSnap.exists()) {
+          setSiteContent(docSnap.data());
+        }
+      } catch (error) {
+        console.error('Error fetching contact content:', error);
+      }
+    };
+    fetchContent();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,7 +93,7 @@ export default function Contacto() {
     <div className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
       <div className="mb-16 text-center">
         <h1 className="font-headline text-5xl md:text-6xl font-black text-on-background mb-6 tracking-tight">
-          {t.contact.title}
+          {siteContent?.title || t.contact.title}
         </h1>
         <p className="text-on-surface-variant text-lg max-w-2xl mx-auto">
           ¿Tienes alguna duda sobre nuestras cartas o merchandising? Estamos aquí para ayudarte a completar tu colección.
@@ -97,7 +110,7 @@ export default function Contacto() {
               </div>
               <h3 className="text-sm font-black uppercase tracking-widest text-blue-900/40 dark:text-blue-100/40">Email</h3>
             </div>
-            <p className="text-xl font-bold text-on-surface">soporte@esfantasia.es</p>
+            <p className="text-xl font-bold text-on-surface">{siteContent?.email || 'soporte@esfantasia.es'}</p>
             <p className="text-sm text-on-surface-variant mt-2">Te responderemos en menos de 24h.</p>
           </div>
 
@@ -108,7 +121,7 @@ export default function Contacto() {
               </div>
               <h3 className="text-sm font-black uppercase tracking-widest text-emerald-900/40 dark:text-emerald-100/40">Teléfono</h3>
             </div>
-            <p className="text-xl font-bold text-on-surface">+34 602 413 055</p>
+            <p className="text-xl font-bold text-on-surface">{siteContent?.phone || '+34 602 413 055'}</p>
             <p className="text-sm text-on-surface-variant mt-2">Lunes a Viernes, 9:00h - 14:00h.</p>
           </div>
 
@@ -120,7 +133,7 @@ export default function Contacto() {
                 </div>
                 <h3 className="text-sm font-black uppercase tracking-widest text-orange-900/40 dark:text-orange-100/40">Ubicación</h3>
               </div>
-              <p className="text-xl font-bold text-on-surface">Murcia, España</p>
+              <p className="text-xl font-bold text-on-surface">{siteContent?.location || 'Murcia, España'}</p>
             </div>
             <div className="mt-6 h-48 rounded-3xl overflow-hidden border border-outline-variant/20 grayscale hover:grayscale-0 transition-all duration-700">
               <iframe 
@@ -128,7 +141,7 @@ export default function Contacto() {
                 width="100%" 
                 height="100%" 
                 style={{ border: 0, filter: isDarkMode ? 'invert(90%) hue-rotate(180deg)' : 'none' }} 
-                src="https://www.google.com/maps?q=Murcia,España&output=embed"
+                src={`https://www.google.com/maps?q=${encodeURIComponent(siteContent?.location || 'Murcia, España')}&output=embed`}
               ></iframe>
             </div>
           </div>
