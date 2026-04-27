@@ -67,6 +67,7 @@ function AdminContent() {
 
   // New CMS and Categories States
   const [siteContent, setSiteContent] = useState<Record<string, any>>({});
+  const [localCMS, setLocalCMS] = useState<Record<string, any>>({});
   const [contentLoading, setContentLoading] = useState(false);
   const [allCategories, setAllCategories] = useState<any[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
@@ -1786,7 +1787,19 @@ function AdminContent() {
             </div>
           </div>
         );
-      case 'contenido':
+      case 'contenido': {
+        const homeData = localCMS.home || {};
+        const contactData = localCMS.contacto || {};
+
+        if (contentLoading) {
+          return (
+            <div className="flex flex-col items-center justify-center py-20 text-on-surface-variant">
+              <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+              <p className="font-bold">Cargando contenido...</p>
+            </div>
+          );
+        }
+
         const updateLocalField = (pageId: string, field: string, value: any) => {
           setLocalCMS(prev => ({
             ...prev,
@@ -1831,7 +1844,7 @@ function AdminContent() {
                         <input 
                           type="text" 
                           placeholder="Ej: Bienvenido a Fun Fantasy"
-                          value={localCMS.home?.heroTitle || 'Bienvenido a Fun Fantasy'} 
+                          value={homeData.heroTitle || 'Bienvenido a Fun Fantasy'} 
                           onChange={e => updateLocalField('home', 'heroTitle', e.target.value)}
                           className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium" 
                         />
@@ -1841,7 +1854,7 @@ function AdminContent() {
                         <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Subtítulo Hero</label>
                         <textarea 
                           placeholder="Ej: Tu tienda de confianza de Final Fantasy..."
-                          value={localCMS.home?.heroSubtitle || 'Tu tienda de confianza de Final Fantasy'} 
+                          value={homeData.heroSubtitle || 'Tu tienda de confianza de Final Fantasy'} 
                           onChange={e => updateLocalField('home', 'heroSubtitle', e.target.value)}
                           className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium h-24 resize-none"
                         ></textarea>
@@ -1857,7 +1870,7 @@ function AdminContent() {
                             <input 
                               type="text" 
                               placeholder="Ej: Ver Todas"
-                              value={localCMS.home?.newsButtonText || 'Ir a Noticias'} 
+                              value={homeData.newsButtonText || 'Ir a Noticias'} 
                               onChange={e => updateLocalField('home', 'newsButtonText', e.target.value)}
                               className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
                             />
@@ -1867,7 +1880,7 @@ function AdminContent() {
                             <input 
                               type="text" 
                               placeholder="Ej: /noticias"
-                              value={localCMS.home?.newsButtonUrl || '/noticias'} 
+                              value={homeData.newsButtonUrl || '/noticias'} 
                               onChange={e => updateLocalField('home', 'newsButtonUrl', e.target.value)}
                               className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
                             />
@@ -1884,7 +1897,7 @@ function AdminContent() {
                           <input 
                             type="text" 
                             placeholder="Ej: ¿Buscas las últimas noticias?"
-                            value={localCMS.home?.newsTitle || '¿Buscas las últimas noticias?'} 
+                            value={homeData.newsTitle || '¿Buscas las últimas noticias?'} 
                             onChange={e => updateLocalField('home', 'newsTitle', e.target.value)}
                             className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
                           />
@@ -1893,7 +1906,7 @@ function AdminContent() {
                           <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Descripción Noticias</label>
                           <textarea 
                             placeholder="Ej: Entérate de los nuevos lanzamientos..."
-                            value={localCMS.home?.newsDescription || 'Entérate de los nuevos lanzamientos de TCG y eventos de la comunidad.'} 
+                            value={homeData.newsDescription || 'Entérate de los nuevos lanzamientos de TCG y eventos de la comunidad.'} 
                             onChange={e => updateLocalField('home', 'newsDescription', e.target.value)}
                             className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium h-20 resize-none"
                           ></textarea>
@@ -1927,7 +1940,7 @@ function AdminContent() {
                           <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Título de la Página</label>
                           <input 
                             type="text" 
-                            value={localCMS.contacto?.title || 'Contacto'} 
+                            value={contactData.title || 'Contacto'} 
                             onChange={e => updateLocalField('contacto', 'title', e.target.value)}
                             className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium" 
                           />
@@ -1937,7 +1950,7 @@ function AdminContent() {
                             <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Email Público</label>
                             <input 
                               type="email" 
-                              value={localCMS.contacto?.email || 'soporte@esfantasia.es'} 
+                              value={contactData.email || 'soporte@esfantasia.es'} 
                               onChange={e => updateLocalField('contacto', 'email', e.target.value)}
                               className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
                             />
@@ -1946,7 +1959,7 @@ function AdminContent() {
                             <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Teléfono</label>
                             <input 
                               type="text" 
-                              value={localCMS.contacto?.phone || '+34 602 413 055'} 
+                              value={contactData.phone || '+34 602 413 055'} 
                               onChange={e => updateLocalField('contacto', 'phone', e.target.value)}
                               className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
                             />
@@ -1956,7 +1969,7 @@ function AdminContent() {
                           <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Ubicación / Dirección</label>
                           <input 
                             type="text" 
-                            value={localCMS.contacto?.location || 'Murcia, España'} 
+                            value={contactData.location || 'Murcia, España'} 
                             onChange={e => updateLocalField('contacto', 'location', e.target.value)}
                             className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium" 
                           />
@@ -1995,8 +2008,8 @@ function AdminContent() {
                         </label>
                       </div>
                       <div className="aspect-video w-full rounded-2xl overflow-hidden border border-outline-variant/30 bg-surface-container flex items-center justify-center relative">
-                        {localCMS.home?.heroImage ? (
-                          <img src={localCMS.home.heroImage} alt="Preview Hero" className="w-full h-full object-cover" />
+                        {homeData.heroImage ? (
+                          <img src={homeData.heroImage} alt="Preview Hero" className="w-full h-full object-cover" />
                         ) : (
                           <div className="flex flex-col items-center gap-2 text-on-surface-variant/40">
                             <span className="material-symbols-outlined text-4xl">image</span>
@@ -2027,8 +2040,8 @@ function AdminContent() {
                         </label>
                       </div>
                       <div className="aspect-video w-full rounded-2xl overflow-hidden border border-outline-variant/30 bg-surface-container flex items-center justify-center relative">
-                        {localCMS.home?.newsBannerImage ? (
-                          <img src={localCMS.home.newsBannerImage} alt="Preview Banner" className="w-full h-full object-cover" />
+                        {homeData.newsBannerImage ? (
+                          <img src={homeData.newsBannerImage} alt="Preview Banner" className="w-full h-full object-cover" />
                         ) : (
                           <div className="flex flex-col items-center gap-2 text-on-surface-variant/40">
                             <span className="material-symbols-outlined text-4xl">image</span>
@@ -2056,6 +2069,7 @@ function AdminContent() {
             </div>
           </div>
         );
+      }
       case 'configuracion':
         return (
           <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden max-w-2xl">
