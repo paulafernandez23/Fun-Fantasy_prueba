@@ -1,5 +1,7 @@
 {
-  "projects": {},
+  "projects": {
+    "default": "ecommerce-ff-ff589"
+  },
   "targets": {},
   "etags": {}
 }
