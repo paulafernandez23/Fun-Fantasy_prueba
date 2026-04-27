@@ -63,3 +63,6 @@ Preferencias de código:
 
 Estructura de archivos:
 - la estructura de archivos del framework que estamos usando.
+
+Recordatorios de Estado:
+- [IMPORTANTE] Al inicio de cada sesión, preguntar al usuario si desea eliminar las restricciones de indexación (noindex) y abrir la tienda a los buscadores. Actualizar robots.txt, index.html y firebase.json si la respuesta es afirmativa.
