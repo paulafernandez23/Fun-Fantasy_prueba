@@ -1826,140 +1826,140 @@ function AdminContent() {
                 </div>
                 <div className="p-8 space-y-6 flex-grow">
                   <div className="grid grid-cols-1 gap-6">
-                    <div className="space-y-2">
-                      <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Título Hero (Cabecera)</label>
-                      <input 
-                        type="text" 
-                        placeholder="Ej: Bienvenido a Fun Fantasy"
-                        value={localCMS.home?.heroTitle || ''} 
-                        onChange={e => updateLocalField('home', 'heroTitle', e.target.value)}
-                        className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium" 
-                      />
-                      <p className="text-[10px] text-on-surface-variant ml-1">El texto principal que aparece nada más entrar en la web.</p>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Subtítulo Hero</label>
-                      <textarea 
-                        placeholder="Ej: Tu tienda de confianza de Final Fantasy..."
-                        value={localCMS.home?.heroSubtitle || ''} 
-                        onChange={e => updateLocalField('home', 'heroSubtitle', e.target.value)}
-                        className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium h-24 resize-none"
-                      ></textarea>
-                    </div>
-                    <div className="bg-surface-container/50 p-6 rounded-3xl border border-outline-variant/20 space-y-4">
-                      <h4 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[16px]">ads_click</span>
-                        Sección de Noticias (Botón)
-                      </h4>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Texto del Botón</label>
-                          <input 
-                            type="text" 
-                            placeholder="Ej: Ver Todas"
-                            value={localCMS.home?.newsButtonText || ''} 
-                            onChange={e => updateLocalField('home', 'newsButtonText', e.target.value)}
-                            className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Enlace (URL)</label>
-                          <input 
-                            type="text" 
-                            placeholder="Ej: /noticias"
-                            value={localCMS.home?.newsButtonUrl || ''} 
-                            onChange={e => updateLocalField('home', 'newsButtonUrl', e.target.value)}
-                            className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="space-y-4">
-                      <h4 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[16px]">newspaper</span>
-                        Textos Sección Noticias
-                      </h4>
                       <div className="space-y-2">
-                        <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Título Noticias</label>
+                        <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Título Hero (Cabecera)</label>
                         <input 
                           type="text" 
-                          placeholder="Ej: ¿Buscas las últimas noticias?"
-                          value={localCMS.home?.newsTitle || ''} 
-                          onChange={e => updateLocalField('home', 'newsTitle', e.target.value)}
-                          className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
+                          placeholder="Ej: Bienvenido a Fun Fantasy"
+                          value={localCMS.home?.heroTitle || 'Bienvenido a Fun Fantasy'} 
+                          onChange={e => updateLocalField('home', 'heroTitle', e.target.value)}
+                          className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium" 
                         />
+                        <p className="text-[10px] text-on-surface-variant ml-1">El texto principal que aparece nada más entrar en la web.</p>
                       </div>
                       <div className="space-y-2">
-                        <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Descripción Noticias</label>
+                        <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Subtítulo Hero</label>
                         <textarea 
-                          placeholder="Ej: Entérate de los nuevos lanzamientos..."
-                          value={localCMS.home?.newsDescription || ''} 
-                          onChange={e => updateLocalField('home', 'newsDescription', e.target.value)}
-                          className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium h-20 resize-none"
+                          placeholder="Ej: Tu tienda de confianza de Final Fantasy..."
+                          value={localCMS.home?.heroSubtitle || 'Tu tienda de confianza de Final Fantasy'} 
+                          onChange={e => updateLocalField('home', 'heroSubtitle', e.target.value)}
+                          className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium h-24 resize-none"
                         ></textarea>
+                      </div>
+                      <div className="bg-surface-container/50 p-6 rounded-3xl border border-outline-variant/20 space-y-4">
+                        <h4 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                          <span className="material-symbols-outlined text-[16px]">ads_click</span>
+                          Sección de Noticias (Botón)
+                        </h4>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Texto del Botón</label>
+                            <input 
+                              type="text" 
+                              placeholder="Ej: Ver Todas"
+                              value={localCMS.home?.newsButtonText || 'Ir a Noticias'} 
+                              onChange={e => updateLocalField('home', 'newsButtonText', e.target.value)}
+                              className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Enlace (URL)</label>
+                            <input 
+                              type="text" 
+                              placeholder="Ej: /noticias"
+                              value={localCMS.home?.newsButtonUrl || '/noticias'} 
+                              onChange={e => updateLocalField('home', 'newsButtonUrl', e.target.value)}
+                              className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <h4 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                          <span className="material-symbols-outlined text-[16px]">newspaper</span>
+                          Textos Sección Noticias
+                        </h4>
+                        <div className="space-y-2">
+                          <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Título Noticias</label>
+                          <input 
+                            type="text" 
+                            placeholder="Ej: ¿Buscas las últimas noticias?"
+                            value={localCMS.home?.newsTitle || '¿Buscas las últimas noticias?'} 
+                            onChange={e => updateLocalField('home', 'newsTitle', e.target.value)}
+                            className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Descripción Noticias</label>
+                          <textarea 
+                            placeholder="Ej: Entérate de los nuevos lanzamientos..."
+                            value={localCMS.home?.newsDescription || 'Entérate de los nuevos lanzamientos de TCG y eventos de la comunidad.'} 
+                            onChange={e => updateLocalField('home', 'newsDescription', e.target.value)}
+                            className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium h-20 resize-none"
+                          ></textarea>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="space-y-8">
-                {/* Contact Page CMS */}
-                <div className="bg-surface-container-lowest rounded-[2.5rem] border border-outline-variant/30 shadow-sm overflow-hidden flex flex-col group hover:border-primary/30 transition-all">
-                  <div className="p-8 border-b border-outline-variant/20 bg-surface-container/30 flex items-center justify-between">
-                    <h3 className="font-black flex items-center gap-3 text-lg">
-                      <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                        <span className="material-symbols-outlined">contact_support</span>
-                      </div>
-                      Página de Contacto
-                    </h3>
-                    <button 
-                      onClick={() => handleSaveContent('contacto')}
-                      className="flex items-center gap-2 px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">save</span>
-                      Guardar Contacto
-                    </button>
-                  </div>
-                  <div className="p-8 space-y-6 flex-grow">
-                    <div className="grid grid-cols-1 gap-6">
-                      <div className="space-y-2">
-                        <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Título de la Página</label>
-                        <input 
-                          type="text" 
-                          value={localCMS.contacto?.title || ''} 
-                          onChange={e => updateLocalField('contacto', 'title', e.target.value)}
-                          className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium" 
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Email Público</label>
-                          <input 
-                            type="email" 
-                            value={localCMS.contacto?.email || ''} 
-                            onChange={e => updateLocalField('contacto', 'email', e.target.value)}
-                            className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
-                          />
+                <div className="space-y-8">
+                  {/* Contact Page CMS */}
+                  <div className="bg-surface-container-lowest rounded-[2.5rem] border border-outline-variant/30 shadow-sm overflow-hidden flex flex-col group hover:border-primary/30 transition-all">
+                    <div className="p-8 border-b border-outline-variant/20 bg-surface-container/30 flex items-center justify-between">
+                      <h3 className="font-black flex items-center gap-3 text-lg">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                          <span className="material-symbols-outlined">contact_support</span>
                         </div>
+                        Página de Contacto
+                      </h3>
+                      <button 
+                        onClick={() => handleSaveContent('contacto')}
+                        className="flex items-center gap-2 px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">save</span>
+                        Guardar Contacto
+                      </button>
+                    </div>
+                    <div className="p-8 space-y-6 flex-grow">
+                      <div className="grid grid-cols-1 gap-6">
                         <div className="space-y-2">
-                          <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Teléfono</label>
+                          <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Título de la Página</label>
                           <input 
                             type="text" 
-                            value={localCMS.contacto?.phone || ''} 
-                            onChange={e => updateLocalField('contacto', 'phone', e.target.value)}
-                            className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
+                            value={localCMS.contacto?.title || 'Contacto'} 
+                            onChange={e => updateLocalField('contacto', 'title', e.target.value)}
+                            className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium" 
                           />
                         </div>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Ubicación / Dirección</label>
-                        <input 
-                          type="text" 
-                          value={localCMS.contacto?.location || ''} 
-                          onChange={e => updateLocalField('contacto', 'location', e.target.value)}
-                          className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium" 
-                        />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Email Público</label>
+                            <input 
+                              type="email" 
+                              value={localCMS.contacto?.email || 'soporte@esfantasia.es'} 
+                              onChange={e => updateLocalField('contacto', 'email', e.target.value)}
+                              className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Teléfono</label>
+                            <input 
+                              type="text" 
+                              value={localCMS.contacto?.phone || '+34 602 413 055'} 
+                              onChange={e => updateLocalField('contacto', 'phone', e.target.value)}
+                              className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Ubicación / Dirección</label>
+                          <input 
+                            type="text" 
+                            value={localCMS.contacto?.location || 'Murcia, España'} 
+                            onChange={e => updateLocalField('contacto', 'location', e.target.value)}
+                            className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium" 
+                          />
                         <p className="text-[10px] text-on-surface-variant ml-1">Esta dirección se usará para generar el mapa de Google en la página de contacto.</p>
                       </div>
                     </div>
