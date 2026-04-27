@@ -23,6 +23,7 @@ import { auth, db } from './lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useAuthStore } from './store/authStore';
+import { getLoyaltyByEmail } from './lib/chatbot/loyaltyService';
 
 import DynamicPage from './pages/DynamicPage';
 import FaqPage from './pages/FaqPage';
@@ -34,22 +35,25 @@ export default function App() {
   const setAdmin = useAuthStore(state => state.setAdmin);
   
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
-      if (user) {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        setAdmin(userDoc.data()?.role === 'admin');
-        
-        // Cargar cuenta de fidelidad globalmente
-        if (user.email) {
-          const { getLoyaltyByEmail } = await import('./lib/chatbot/loyaltyService');
-          const loyalty = await getLoyaltyByEmail(user.email);
-          useAuthStore.getState().setLoyaltyAccount(loyalty);
+      
+      const handleAuthUpdate = async () => {
+        if (user) {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          setAdmin(userDoc.data()?.role === 'admin');
+          
+          if (user.email) {
+            const loyalty = await getLoyaltyByEmail(user.email);
+            useAuthStore.getState().setLoyaltyAccount(loyalty);
+          }
+        } else {
+          setAdmin(false);
+          useAuthStore.getState().setLoyaltyAccount(null);
         }
-      } else {
-        setAdmin(false);
-        useAuthStore.getState().setLoyaltyAccount(null);
-      }
+      };
+
+      handleAuthUpdate();
     });
     return () => unsubscribe();
   }, [setUser, setAdmin]);

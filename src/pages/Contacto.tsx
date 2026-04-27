@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { addDoc, collection, Timestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { updateMetaTags } from '../lib/seoUtils';
+import { sendContactNotification } from '../lib/emailService';
 
 export default function Contacto() {
   const isDarkMode = useSettingsStore(state => state.isDarkMode);
@@ -53,7 +54,6 @@ export default function Contacto() {
 
       // 2. Notificar al administrador por email
       try {
-        const { sendContactNotification } = await import('../lib/emailService');
         await sendContactNotification({
           name: `${formData.name} ${formData.lastName}`,
           email: formData.email,

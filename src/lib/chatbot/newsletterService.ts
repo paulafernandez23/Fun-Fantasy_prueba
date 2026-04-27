@@ -5,7 +5,9 @@ import {
   addDoc, 
   query, 
   where, 
-  Timestamp 
+  Timestamp,
+  deleteDoc,
+  doc 
 } from 'firebase/firestore';
 
 export interface NewsletterSubscriber {
@@ -59,8 +61,6 @@ export async function unsubscribeFromNewsletter(email: string): Promise<void> {
   }
 
   // Use deleteDoc from firebase/firestore
-  const { deleteDoc, doc } = await import('firebase/firestore');
-  
   // We delete all matches in case there are duplicates
   const deletePromises = snapshot.docs.map(d => deleteDoc(doc(db, 'newsletter', d.id)));
   await Promise.all(deletePromises);
