@@ -24,9 +24,9 @@ let genAIInstance: GoogleGenAI | null = null;
 
 function getGenAI(): GoogleGenAI {
   if (!genAIInstance) {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyDD2Q0YVSVlM7WGMDaapYnkTD-bmeIDie4";
     if (!apiKey) {
-      throw new Error('Falta la variable de entorno VITE_GEMINI_API_KEY');
+      console.error('Falta la variable de entorno VITE_GEMINI_API_KEY');
     }
     genAIInstance = new GoogleGenAI({ apiKey });
   }
