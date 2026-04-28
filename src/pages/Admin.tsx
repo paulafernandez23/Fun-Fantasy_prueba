@@ -1818,9 +1818,9 @@ function AdminContent() {
                 <p className="text-on-surface-variant mt-1">Gestiona los textos e imágenes de las secciones públicas de tu tienda.</p>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Home Page CMS */}
+              {/* ===== Home Page CMS ===== */}
               <div className="bg-surface-container-lowest rounded-[2.5rem] border border-outline-variant/30 shadow-sm overflow-hidden flex flex-col group hover:border-primary/30 transition-all">
                 <div className="p-8 border-b border-outline-variant/20 bg-surface-container/30 flex items-center justify-between">
                   <h3 className="font-black flex items-center gap-3 text-lg">
@@ -1829,242 +1829,320 @@ function AdminContent() {
                     </div>
                     Página de Inicio
                   </h3>
-                  <button 
+                  <button
                     onClick={() => handleSaveContent('home')}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95"
+                    disabled={isSaving}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 disabled:opacity-60"
                   >
-                    <span className="material-symbols-outlined text-[18px]">save</span>
+                    {isSaving
+                      ? <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+                      : <span className="material-symbols-outlined text-[18px]">save</span>
+                    }
                     Guardar Inicio
                   </button>
                 </div>
                 <div className="p-8 space-y-6 flex-grow">
                   <div className="grid grid-cols-1 gap-6">
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Título Hero (Cabecera)</label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Bienvenido a Fun Fantasy"
+                        value={homeData.heroTitle ?? ''}
+                        onChange={e => updateLocalField('home', 'heroTitle', e.target.value)}
+                        className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium"
+                      />
+                      <p className="text-[10px] text-on-surface-variant ml-1">El texto principal que aparece nada más entrar en la web.</p>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Subtítulo Hero</label>
+                      <textarea
+                        placeholder="Ej: Tu tienda de confianza de Final Fantasy..."
+                        value={homeData.heroSubtitle ?? ''}
+                        onChange={e => updateLocalField('home', 'heroSubtitle', e.target.value)}
+                        className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium h-24 resize-none"
+                      ></textarea>
+                    </div>
+                    <div className="bg-surface-container/50 p-6 rounded-3xl border border-outline-variant/20 space-y-4">
+                      <h4 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[16px]">ads_click</span>
+                        Sección de Noticias (Botón)
+                      </h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Texto del Botón</label>
+                          <input
+                            type="text"
+                            placeholder="Ej: Ver Todas"
+                            value={homeData.newsButtonText ?? ''}
+                            onChange={e => updateLocalField('home', 'newsButtonText', e.target.value)}
+                            className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Enlace (URL)</label>
+                          <input
+                            type="text"
+                            placeholder="Ej: /noticias"
+                            value={homeData.newsButtonUrl ?? ''}
+                            onChange={e => updateLocalField('home', 'newsButtonUrl', e.target.value)}
+                            className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <h4 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[16px]">newspaper</span>
+                        Textos Sección Noticias
+                      </h4>
                       <div className="space-y-2">
-                        <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Título Hero (Cabecera)</label>
-                        <input 
-                          type="text" 
-                          placeholder="Ej: Bienvenido a Fun Fantasy"
-                          value={homeData.heroTitle || 'Bienvenido a Fun Fantasy'} 
-                          onChange={e => updateLocalField('home', 'heroTitle', e.target.value)}
-                          className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium" 
+                        <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Título Noticias</label>
+                        <input
+                          type="text"
+                          placeholder="Ej: ¿Buscas las últimas noticias?"
+                          value={homeData.newsTitle ?? ''}
+                          onChange={e => updateLocalField('home', 'newsTitle', e.target.value)}
+                          className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium"
                         />
-                        <p className="text-[10px] text-on-surface-variant ml-1">El texto principal que aparece nada más entrar en la web.</p>
                       </div>
                       <div className="space-y-2">
-                        <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Subtítulo Hero</label>
-                        <textarea 
-                          placeholder="Ej: Tu tienda de confianza de Final Fantasy..."
-                          value={homeData.heroSubtitle || 'Tu tienda de confianza de Final Fantasy'} 
-                          onChange={e => updateLocalField('home', 'heroSubtitle', e.target.value)}
-                          className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium h-24 resize-none"
+                        <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Descripción Noticias</label>
+                        <textarea
+                          placeholder="Ej: Entérate de los nuevos lanzamientos..."
+                          value={homeData.newsDescription ?? ''}
+                          onChange={e => updateLocalField('home', 'newsDescription', e.target.value)}
+                          className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium h-20 resize-none"
                         ></textarea>
-                      </div>
-                      <div className="bg-surface-container/50 p-6 rounded-3xl border border-outline-variant/20 space-y-4">
-                        <h4 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[16px]">ads_click</span>
-                          Sección de Noticias (Botón)
-                        </h4>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Texto del Botón</label>
-                            <input 
-                              type="text" 
-                              placeholder="Ej: Ver Todas"
-                              value={homeData.newsButtonText || 'Ir a Noticias'} 
-                              onChange={e => updateLocalField('home', 'newsButtonText', e.target.value)}
-                              className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Enlace (URL)</label>
-                            <input 
-                              type="text" 
-                              placeholder="Ej: /noticias"
-                              value={homeData.newsButtonUrl || '/noticias'} 
-                              onChange={e => updateLocalField('home', 'newsButtonUrl', e.target.value)}
-                              className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="space-y-4">
-                        <h4 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[16px]">newspaper</span>
-                          Textos Sección Noticias
-                        </h4>
-                        <div className="space-y-2">
-                          <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Título Noticias</label>
-                          <input 
-                            type="text" 
-                            placeholder="Ej: ¿Buscas las últimas noticias?"
-                            value={homeData.newsTitle || '¿Buscas las últimas noticias?'} 
-                            onChange={e => updateLocalField('home', 'newsTitle', e.target.value)}
-                            className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Descripción Noticias</label>
-                          <textarea 
-                            placeholder="Ej: Entérate de los nuevos lanzamientos..."
-                            value={homeData.newsDescription || 'Entérate de los nuevos lanzamientos de TCG y eventos de la comunidad.'} 
-                            onChange={e => updateLocalField('home', 'newsDescription', e.target.value)}
-                            className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium h-20 resize-none"
-                          ></textarea>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-8">
-                  {/* Contact Page CMS */}
-                  <div className="bg-surface-container-lowest rounded-[2.5rem] border border-outline-variant/30 shadow-sm overflow-hidden flex flex-col group hover:border-primary/30 transition-all">
-                    <div className="p-8 border-b border-outline-variant/20 bg-surface-container/30 flex items-center justify-between">
-                      <h3 className="font-black flex items-center gap-3 text-lg">
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                          <span className="material-symbols-outlined">contact_support</span>
-                        </div>
-                        Página de Contacto
-                      </h3>
-                      <button 
-                        onClick={() => handleSaveContent('contacto')}
-                        className="flex items-center gap-2 px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">save</span>
-                        Guardar Contacto
-                      </button>
-                    </div>
-                    <div className="p-8 space-y-6 flex-grow">
-                      <div className="grid grid-cols-1 gap-6">
-                        <div className="space-y-2">
-                          <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Título de la Página</label>
-                          <input 
-                            type="text" 
-                            value={contactData.title || 'Contacto'} 
-                            onChange={e => updateLocalField('contacto', 'title', e.target.value)}
-                            className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium" 
-                          />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Email Público</label>
-                            <input 
-                              type="email" 
-                              value={contactData.email || 'soporte@esfantasia.es'} 
-                              onChange={e => updateLocalField('contacto', 'email', e.target.value)}
-                              className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Teléfono</label>
-                            <input 
-                              type="text" 
-                              value={contactData.phone || '+34 602 413 055'} 
-                              onChange={e => updateLocalField('contacto', 'phone', e.target.value)}
-                              className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium" 
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Ubicación / Dirección</label>
-                          <input 
-                            type="text" 
-                            value={contactData.location || 'Murcia, España'} 
-                            onChange={e => updateLocalField('contacto', 'location', e.target.value)}
-                            className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium" 
-                          />
-                        <p className="text-[10px] text-on-surface-variant ml-1">Esta dirección se usará para generar el mapa de Google en la página de contacto.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Media Management */}
-                <div className="bg-surface-container-lowest rounded-[2.5rem] border border-outline-variant/30 shadow-sm overflow-hidden flex flex-col group hover:border-primary/30 transition-all">
-                  <div className="p-8 border-b border-outline-variant/20 bg-surface-container/30">
-                    <h3 className="font-black flex items-center gap-3 text-lg">
-                      <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                        <span className="material-symbols-outlined">image</span>
-                      </div>
-                      Imágenes y Multimedia
-                    </h3>
-                  </div>
-                  <div className="p-8 space-y-8 flex-grow">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-black text-xs uppercase tracking-widest text-on-surface-variant">Imagen Hero (Inicio)</h4>
-                          <p className="text-[10px] text-on-surface-variant">Imagen de fondo principal de la home.</p>
-                        </div>
-                        <label className="cursor-pointer px-4 py-2 bg-primary/10 text-primary rounded-xl font-bold text-xs hover:bg-primary/20 transition-all flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[16px]">upload</span>
-                          Subir Nueva
-                          <input 
-                            type="file" 
-                            className="hidden" 
-                            accept="image/*" 
-                            onChange={e => e.target.files && handleCMSImageUpload('home', 'heroImage', e.target.files[0])}
-                          />
-                        </label>
-                      </div>
-                      <div className="aspect-video w-full rounded-2xl overflow-hidden border border-outline-variant/30 bg-surface-container flex items-center justify-center relative">
-                        {homeData.heroImage ? (
-                          <img src={homeData.heroImage} alt="Preview Hero" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="flex flex-col items-center gap-2 text-on-surface-variant/40">
-                            <span className="material-symbols-outlined text-4xl">image</span>
-                            <span className="text-xs font-bold">Sin Imagen</span>
-                          </div>
-                        )}
-                        <div className="absolute top-3 left-3 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black text-white uppercase tracking-widest border border-white/20">
-                          Vista Previa
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-black text-xs uppercase tracking-widest text-on-surface-variant">Banner de Noticias</h4>
-                          <p className="text-[10px] text-on-surface-variant">Imagen destacada en el banner de noticias de la home.</p>
-                        </div>
-                        <label className="cursor-pointer px-4 py-2 bg-primary/10 text-primary rounded-xl font-bold text-xs hover:bg-primary/20 transition-all flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[16px]">upload</span>
-                          Subir Nueva
-                          <input 
-                            type="file" 
-                            className="hidden" 
-                            accept="image/*" 
-                            onChange={e => e.target.files && handleCMSImageUpload('home', 'newsBannerImage', e.target.files[0])}
-                          />
-                        </label>
-                      </div>
-                      <div className="aspect-video w-full rounded-2xl overflow-hidden border border-outline-variant/30 bg-surface-container flex items-center justify-center relative">
-                        {homeData.newsBannerImage ? (
-                          <img src={homeData.newsBannerImage} alt="Preview Banner" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="flex flex-col items-center gap-2 text-on-surface-variant/40">
-                            <span className="material-symbols-outlined text-4xl">image</span>
-                            <span className="text-xs font-bold">Sin Imagen</span>
-                          </div>
-                        )}
-                        <div className="absolute top-3 left-3 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black text-white uppercase tracking-widest border border-white/20">
-                          Vista Previa
-                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
+
+              {/* ===== Contact Page CMS ===== */}
+              <div className="bg-surface-container-lowest rounded-[2.5rem] border border-outline-variant/30 shadow-sm overflow-hidden flex flex-col group hover:border-primary/30 transition-all">
+                <div className="p-8 border-b border-outline-variant/20 bg-surface-container/30 flex items-center justify-between">
+                  <h3 className="font-black flex items-center gap-3 text-lg">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                      <span className="material-symbols-outlined">contact_support</span>
+                    </div>
+                    Página de Contacto
+                  </h3>
+                  <button
+                    onClick={() => handleSaveContent('contacto')}
+                    disabled={isSaving}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 disabled:opacity-60"
+                  >
+                    {isSaving
+                      ? <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+                      : <span className="material-symbols-outlined text-[18px]">save</span>
+                    }
+                    Guardar Contacto
+                  </button>
+                </div>
+                <div className="p-8 space-y-6 flex-grow">
+                  <div className="grid grid-cols-1 gap-6">
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Título de la Página</label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Contacto"
+                        value={contactData.title ?? ''}
+                        onChange={e => updateLocalField('contacto', 'title', e.target.value)}
+                        className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Email Público</label>
+                        <input
+                          type="email"
+                          placeholder="soporte@esfantasia.es"
+                          value={contactData.email ?? ''}
+                          onChange={e => updateLocalField('contacto', 'email', e.target.value)}
+                          className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Teléfono</label>
+                        <input
+                          type="text"
+                          placeholder="+34 600 000 000"
+                          value={contactData.phone ?? ''}
+                          onChange={e => updateLocalField('contacto', 'phone', e.target.value)}
+                          className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Ubicación / Dirección</label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Murcia, España"
+                        value={contactData.location ?? ''}
+                        onChange={e => updateLocalField('contacto', 'location', e.target.value)}
+                        className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium"
+                      />
+                      <p className="text-[10px] text-on-surface-variant ml-1">Esta dirección se usará para generar el mapa de Google en la página de contacto.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            
+
+            {/* ===== Media Management ===== */}
+            <div className="bg-surface-container-lowest rounded-[2.5rem] border border-outline-variant/30 shadow-sm overflow-hidden group hover:border-primary/30 transition-all">
+              <div className="p-8 border-b border-outline-variant/20 bg-surface-container/30 flex items-center justify-between">
+                <h3 className="font-black flex items-center gap-3 text-lg">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                    <span className="material-symbols-outlined">image</span>
+                  </div>
+                  Imágenes y Multimedia
+                </h3>
+                <button
+                  onClick={() => handleSaveContent('home')}
+                  disabled={isSaving}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 disabled:opacity-60"
+                >
+                  {isSaving
+                    ? <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+                    : <span className="material-symbols-outlined text-[18px]">save</span>
+                  }
+                  Guardar Imágenes
+                </button>
+              </div>
+              <div className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                {/* Hero Image + contextual preview */}
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h4 className="font-black text-xs uppercase tracking-widest text-on-surface-variant">Imagen Hero (Inicio)</h4>
+                      <p className="text-[10px] text-on-surface-variant mt-1">Imagen de fondo principal de la home. Se muestra con <strong>30% opacidad</strong> y <strong>mix-blend-overlay</strong> sobre el gradiente. La vista previa refleja exactamente cómo se verá.</p>
+                    </div>
+                    <label className="cursor-pointer shrink-0 px-4 py-2 bg-primary/10 text-primary rounded-xl font-bold text-xs hover:bg-primary/20 transition-all flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[16px]">upload</span>
+                      Subir Nueva
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={e => e.target.files && handleCMSImageUpload('home', 'heroImage', e.target.files[0])}
+                      />
+                    </label>
+                  </div>
+                  {/* Contextual Hero preview matching Home.tsx exactly */}
+                  <div
+                    className="relative w-full rounded-2xl overflow-hidden border border-outline-variant/30"
+                    style={{ aspectRatio: '16/7', background: '#1a1a2e' }}
+                  >
+                    {/* Same gradient as Home hero section */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-primary/20 to-background z-10 pointer-events-none"></div>
+                    {/* Hero image with same styles as Home.tsx */}
+                    {homeData.heroImage ? (
+                      <img
+                        src={homeData.heroImage}
+                        alt="Preview Hero"
+                        className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-30 scale-105"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-white/20 bg-gradient-to-br from-surface-container to-surface-container-high">
+                        <span className="material-symbols-outlined text-5xl">image</span>
+                        <span className="text-xs font-bold mt-2">Sin imagen — sube una para ver la vista previa</span>
+                      </div>
+                    )}
+                    {/* Content overlay matching Home.tsx layout */}
+                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center px-4 gap-1.5">
+                      <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/10 text-primary/80 rounded-full text-[8px] font-bold border border-primary/20 backdrop-blur-sm">
+                        <span className="material-symbols-outlined" style={{fontSize: '8px'}}>stars</span>
+                        PRODUCTOS DESTACADOS
+                      </div>
+                      <p className="font-black text-on-background text-center text-sm leading-tight tracking-tight drop-shadow-lg max-w-xs line-clamp-2">
+                        {homeData.heroTitle || 'Bienvenido a Fun Fantasy'}
+                      </p>
+                      <p className="text-on-surface-variant text-[9px] text-center max-w-[75%] line-clamp-1">
+                        {homeData.heroSubtitle || 'Tu tienda de confianza de Final Fantasy'}
+                      </p>
+                      {/* Mini search bar */}
+                      <div className="flex items-center gap-1.5 bg-surface-container-lowest/90 backdrop-blur-sm rounded-xl px-3 py-1.5 border-2 border-outline-variant/30 w-full max-w-[220px] mt-0.5 shadow-xl">
+                        <span className="material-symbols-outlined text-on-surface-variant text-[14px]">search</span>
+                        <span className="text-on-surface-variant/50 text-[9px] font-medium flex-1">Buscar cartas...</span>
+                        <div className="px-2 py-0.5 bg-primary text-on-primary rounded text-[7px] font-bold">Buscar</div>
+                      </div>
+                    </div>
+                    <div className="absolute top-2 left-2 z-30 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full text-[8px] font-black text-white uppercase tracking-widest border border-white/20">
+                      Vista Previa Real
+                    </div>
+                  </div>
+                </div>
+
+                {/* News Banner Image + contextual preview */}
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h4 className="font-black text-xs uppercase tracking-widest text-on-surface-variant">Banner de Noticias</h4>
+                      <p className="text-[10px] text-on-surface-variant mt-1">Imagen del banner de noticias. Aparece con <strong>60% opacidad</strong> sobre fondo de color primario con efecto de zoom al pasar el ratón.</p>
+                    </div>
+                    <label className="cursor-pointer shrink-0 px-4 py-2 bg-primary/10 text-primary rounded-xl font-bold text-xs hover:bg-primary/20 transition-all flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[16px]">upload</span>
+                      Subir Nueva
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={e => e.target.files && handleCMSImageUpload('home', 'newsBannerImage', e.target.files[0])}
+                      />
+                    </label>
+                  </div>
+                  {/* Contextual News banner preview */}
+                  <div
+                    className="relative w-full rounded-2xl overflow-hidden border border-outline-variant/30 bg-primary"
+                    style={{ aspectRatio: '16/7' }}
+                  >
+                    <div className="absolute inset-0 opacity-10 z-0" style={{backgroundImage: "url('https://www.transparenttextures.com/patterns/carbon-fibre.png')"}}></div>
+                    <div className="absolute inset-0 z-10 flex items-center px-6 gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-black text-on-primary text-xs leading-tight line-clamp-2">
+                          {homeData.newsTitle || '¿Buscas las últimas noticias?'}
+                        </p>
+                        <p className="text-on-primary/70 text-[8px] mt-1 line-clamp-2">
+                          {homeData.newsDescription || 'Entérate de los nuevos lanzamientos de TCG y eventos de la comunidad.'}
+                        </p>
+                        <div className="inline-flex items-center gap-1 mt-2 px-2.5 py-1 bg-on-primary text-primary rounded-xl text-[8px] font-bold">
+                          {homeData.newsButtonText || 'Ir a Noticias'}
+                          <span className="material-symbols-outlined" style={{fontSize: '8px'}}>newspaper</span>
+                        </div>
+                      </div>
+                      <div className="relative shrink-0 rounded-2xl overflow-hidden bg-on-primary/10 backdrop-blur-md border border-on-primary/20 flex items-center justify-center" style={{width: '45%', aspectRatio: '16/10'}}>
+                        {homeData.newsBannerImage ? (
+                          <img src={homeData.newsBannerImage} alt="Preview Banner" className="w-full h-full object-cover opacity-60" />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center text-white/20 w-full h-full">
+                            <span className="material-symbols-outlined text-2xl">image</span>
+                            <span className="text-[8px] font-bold mt-1">Sin imagen</span>
+                          </div>
+                        )}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="material-symbols-outlined text-on-primary/50 text-3xl">play_circle</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="absolute top-2 left-2 z-30 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full text-[8px] font-black text-white uppercase tracking-widest border border-white/20">
+                      Vista Previa Real
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="p-8 bg-primary/5 border border-primary/20 rounded-[2.5rem] flex items-center gap-6">
               <div className="w-14 h-14 rounded-2xl bg-primary/20 text-primary flex items-center justify-center shrink-0">
                 <span className="material-symbols-outlined text-3xl">info</span>
               </div>
               <div>
                 <p className="text-sm text-on-surface font-bold">Sugerencia de Calidad</p>
-                <p className="text-xs text-on-surface-variant mt-1">Para obtener los mejores resultados visuales, utiliza imágenes en alta resolución y asegúrate de hacer clic en el botón "Guardar" de cada sección después de realizar cambios en los textos.</p>
+                <p className="text-xs text-on-surface-variant mt-1">Para mejores resultados, usa imágenes en alta resolución (mínimo 1920x1080). Las vistas previas muestran exactamente como se vera el contenido en la tienda publica, con los mismos estilos y efectos. Recuerda hacer clic en Guardar despues de cada cambio.</p>
               </div>
             </div>
           </div>
