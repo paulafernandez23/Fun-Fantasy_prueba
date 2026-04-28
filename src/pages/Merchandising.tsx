@@ -29,9 +29,9 @@ export default function Merchandising() {
         // Fetch categories for this section
         const cSnap = await getDocs(collection(db, 'categories'));
         const fetchedCats = cSnap.docs
-          .map(doc => doc.data())
-          .filter(cat => cat.section === 'merchandising') // Merchandising must be explicit
-          .map(cat => cat.name)
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter((cat: any) => cat.section === 'merchandising') 
+          .map((cat: any) => cat.name)
           .filter(name => typeof name === 'string' && name.trim() !== '');
         setDynamicCategories(fetchedCats);
       } catch (error) {

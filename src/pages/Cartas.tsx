@@ -34,9 +34,9 @@ export default function Cartas() {
         // Fetch categories for this section
         const cSnap = await getDocs(collection(db, 'categories'));
         const fetchedCats = cSnap.docs
-          .map(doc => doc.data())
-          .filter(cat => !cat.section || cat.section === 'cartas') // Include legacy or explicit cartas
-          .map(cat => cat.name)
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter((cat: any) => !cat.section || cat.section === 'cartas') 
+          .map((cat: any) => cat.name)
           .filter(name => typeof name === 'string' && name.trim() !== '');
         setDynamicCategories(fetchedCats);
       } catch (error) {
