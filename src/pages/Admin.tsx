@@ -588,6 +588,32 @@ function AdminContent() {
           }
         }
 
+        // Auto-create missing categories
+        let createdCategories = 0;
+        const existingCategoryNames = new Set(allCategories.map(c => c.name.toLowerCase()));
+        const uploadedCategories = new Set<string>();
+        
+        products.forEach(p => {
+          if (p.category && typeof p.category === 'string') {
+            uploadedCategories.add(p.category.trim());
+          }
+        });
+
+        for (const catName of Array.from(uploadedCategories)) {
+          if (!existingCategoryNames.has(catName.toLowerCase())) {
+            const sampleProduct = products.find(p => p.category?.trim() === catName);
+            const section = sampleProduct?.type || 'merchandising';
+            
+            await addDoc(collection(db, 'categories'), {
+              name: catName,
+              section: section,
+              subcategories: []
+            });
+            createdCategories++;
+            existingCategoryNames.add(catName.toLowerCase()); // Avoid duplicates in loop
+          }
+        }
+
         // Upsert Logic
         let updatedCount = 0;
         let createdCount = 0;
@@ -622,7 +648,7 @@ function AdminContent() {
         }
 
         loadData();
-        showAlert('Carga Completada', `Se han creado ${createdCount} productos y actualizado ${updatedCount}.`);
+        showAlert('Carga Completada', `Se han creado ${createdCount} productos y actualizado ${updatedCount}. ${createdCategories > 0 ? `Se han creado ${createdCategories} categorías nuevas.` : ''}`);
       } catch (err) {
         console.error(err);
         showAlert('Error', 'Hubo un problema procesando el archivo.');
