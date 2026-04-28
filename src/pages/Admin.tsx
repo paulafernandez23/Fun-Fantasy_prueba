@@ -67,7 +67,10 @@ function AdminContent() {
 
   // New CMS and Categories States
   const [siteContent, setSiteContent] = useState<Record<string, any>>({});
-  const [localCMS, setLocalCMS] = useState<Record<string, any>>({});
+  const [localCMS, setLocalCMS] = useState<Record<string, any>>({ 
+    home: { heroTitle: '', heroSubtitle: '', heroImage: '' }, 
+    contacto: { title: '', email: '' } 
+  });
   const [contentLoading, setContentLoading] = useState(false);
   const [allCategories, setAllCategories] = useState<any[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
@@ -179,10 +182,38 @@ function AdminContent() {
           const fetched: Record<string, any> = {};
           snap.docs.forEach(d => { fetched[d.id] = d.data(); });
           setSiteContent(fetched);
-          // Pre-populate with fallbacks so admin always sees actual site text
-          const homeMerged = { ...{"heroTitle":"Fun Fantasy","heroSubtitle":"Tu tienda de confianza de Final Fantasy","newsTitle":"¿Buscas las últimas noticias?","newsDescription":"Entérate de los nuevos lanzamientos de TCG y eventos de la comunidad.","newsButtonText":"Ir a Noticias","newsButtonUrl":"/noticias"}, ...(fetched['home'] || {}) };
-          const contactoMerged = { ...{"title":"Contacto","email":"soporte@esfantasia.es","phone":"+34 602 413 055","location":"Murcia, España"}, ...(fetched['contacto'] || {}) };
+          
+          // Use translations as the absolute fallback
+          const t = translations[config.language];
+          
+          const homeMerged = { 
+            heroTitle: t.home.heroTitle,
+            heroSubtitle: t.home.heroSubtitle,
+            newsTitle: "¿Buscas las últimas noticias?",
+            newsDescription: "Entérate de los nuevos lanzamientos de TCG y eventos de la comunidad.",
+            newsButtonText: "Ir a Noticias",
+            newsButtonUrl: "/noticias",
+            ...(fetched['home'] || {}) 
+          };
+          
+          const contactoMerged = { 
+            title: t.contact.title,
+            email: "soporte@esfantasia.es",
+            phone: "+34 602 413 055",
+            location: "Murcia, España",
+            ...(fetched['contacto'] || {}) 
+          };
+          
           setLocalCMS({ ...fetched, home: homeMerged, contacto: contactoMerged });
+        })
+        .catch(err => {
+          console.error("Error loading site content:", err);
+          // Even on error, set locals with fallbacks
+          const t = translations[config.language];
+          setLocalCMS({
+            home: { heroTitle: t.home.heroTitle, heroSubtitle: t.home.heroSubtitle },
+            contacto: { title: t.contact.title }
+          });
         })
         .finally(() => setContentLoading(false));
     }
@@ -488,6 +519,7 @@ function AdminContent() {
     try {
       const categoryData = {
         name: newCategory.name,
+        section: newCategory.section || 'merchandising',
         subcategories: (newCategory.subcategories || '').split(',').map(s => s.trim()).filter(s => s !== '')
       };
 
@@ -511,6 +543,50 @@ function AdminContent() {
       setIsSaving(false);
     }
   };
+
+  // Initialize localCMS when siteContent or translations change
+  useEffect(() => {
+    if (siteContent && Object.keys(siteContent).length > 0) {
+      setLocalCMS({
+        home: {
+          heroTitle: siteContent.home?.heroTitle || t.home.heroTitle,
+          heroSubtitle: siteContent.home?.heroSubtitle || t.home.heroSubtitle,
+          heroImage: siteContent.home?.heroImage || '',
+          newsTitle: siteContent.home?.newsTitle || '',
+          newsDescription: siteContent.home?.newsDescription || '',
+          newsButtonText: siteContent.home?.newsButtonText || '',
+          newsButtonUrl: siteContent.home?.newsButtonUrl || '',
+        },
+        contacto: {
+          title: siteContent.contacto?.title || t.contact.title,
+          email: siteContent.contacto?.email || t.contact.email,
+          phone: siteContent.contacto?.phone || '',
+          address: siteContent.contacto?.address || '',
+          schedule: siteContent.contacto?.schedule || '',
+        }
+      });
+    } else if (!siteContent) {
+      // Fallback to translations if no firestore data yet
+      setLocalCMS({
+        home: {
+          heroTitle: t.home.heroTitle,
+          heroSubtitle: t.home.heroSubtitle,
+          heroImage: '',
+          newsTitle: '',
+          newsDescription: '',
+          newsButtonText: '',
+          newsButtonUrl: '',
+        },
+        contacto: {
+          title: t.contact.title,
+          email: t.contact.email,
+          phone: '',
+          address: '',
+          schedule: '',
+        }
+      });
+    }
+  }, [siteContent, language]); // Re-run if siteContent or language changes
 
   const handleBulkUpload = async (file: File) => {
     setIsSaving(true);
@@ -594,19 +670,23 @@ function AdminContent() {
 
   const handleSaveContent = async (pageId: string) => {
     setIsSaving(true);
+    console.log(`Guardando contenido para ${pageId}...`, localCMS[pageId]);
     try {
       const data = localCMS[pageId] || {};
-      await setDoc(doc(db, 'site_content', pageId), data, { merge: true });
+      const docRef = doc(db, 'site_content', pageId);
+      await setDoc(docRef, data, { merge: true });
+      
       setSiteContent(prev => ({ 
         ...prev, 
         [pageId]: data 
       }));
-      showAlert('Éxito', 'Contenido guardado correctamente.');
+      
+      showAlert('Éxito', `El contenido de ${pageId === 'home' ? 'Inicio' : 'Contacto'} se ha guardado correctamente.`);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (error) {
-      console.error(error);
-      showAlert('Error', 'No se pudo guardar el contenido.');
+    } catch (error: any) {
+      console.error("Error al guardar contenido:", error);
+      showAlert('Error', `No se pudo guardar: ${error.message || 'Error desconocido'}`);
     } finally {
       setIsSaving(false);
     }
@@ -765,7 +845,7 @@ function AdminContent() {
                             <span className="font-bold text-primary">{appt.time}</span>
                           </div>
                           <div className="flex-grow min-w-0">
-                            <p className="font-medium text-on-surface truncate">{appt.name}</p>
+                            <p className="font-medium text-on-surface">{appt.name}</p>
                             <p className="text-xs text-on-surface-variant truncate">{appt.cardDescription}</p>
                           </div>
                         </div>
@@ -928,8 +1008,8 @@ function AdminContent() {
                   className="bg-surface-container-high border border-outline-variant/30 rounded-xl px-3 py-2 text-sm outline-none font-medium"
                 >
                   <option value="Todas">Todas las categorías</option>
-                  {Array.from(new Set(allProducts.map(p => p.category))).map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                  {allCategories.map(cat => (
+                    <option key={cat.id} value={cat.name}>{cat.name} ({cat.section})</option>
                   ))}
                 </select>
                 <select 
@@ -948,25 +1028,42 @@ function AdminContent() {
               <div className="p-6 border-b border-outline-variant/20 bg-surface-container-high">
                 <h3 className="font-bold mb-4">{editingProductId ? 'Editar Producto' : 'Añadir Nuevo Producto'}</h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <input type="text" placeholder="Título" value={newProduct.title} onChange={e => setNewProduct({...newProduct, title: e.target.value})} className="px-3 py-2 rounded bg-surface-container border border-outline-variant/30" />
-                  <select 
-                    value={newProduct.category} 
-                    onChange={e => setNewProduct({...newProduct, category: e.target.value, subcategory: ''})} 
-                    className="px-3 py-2 rounded bg-surface-container border border-outline-variant/30"
-                  >
-                    <option value="">Seleccionar Categoría</option>
-                    {allCategories.map(cat => (
-                      <option key={cat.id} value={cat.name}>{cat.name}</option>
-                    ))}
-                  </select>
+                  <div className="col-span-2 grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Tipo de Producto</label>
+                      <select 
+                        value={newProduct.type} 
+                        onChange={e => setNewProduct({...newProduct, type: e.target.value, category: '', subcategory: ''})} 
+                        className="w-full px-3 py-2.5 rounded-xl bg-surface-container border border-outline-variant/30 text-sm font-bold"
+                      >
+                        <option value="cartas">Cartas (TCG)</option>
+                        <option value="merchandising">Merchandising</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Categoría</label>
+                      <select 
+                        value={newProduct.category} 
+                        onChange={e => setNewProduct({...newProduct, category: e.target.value, subcategory: ''})} 
+                        className="w-full px-3 py-2.5 rounded-xl bg-surface-container border border-outline-variant/30 text-sm font-bold"
+                      >
+                        <option value="">Seleccionar Categoría</option>
+                        {allCategories.filter(cat => cat.section === newProduct.type).map(cat => (
+                          <option key={cat.id} value={cat.name}>{cat.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
 
+                  <input type="text" placeholder="Título" value={newProduct.title} onChange={e => setNewProduct({...newProduct, title: e.target.value})} className="px-3 py-2.5 rounded-xl bg-surface-container border border-outline-variant/30 text-sm" />
+                  
                   {newProduct.category && allCategories.find(c => c.name === newProduct.category)?.subcategories?.length > 0 && (
                     <div className="col-span-2">
                       <label className="block text-[10px] font-bold uppercase mb-1 ml-1 text-on-surface-variant">Subcategoría</label>
                       <select 
                         value={newProduct.subcategory} 
                         onChange={e => setNewProduct({...newProduct, subcategory: e.target.value})} 
-                        className="w-full px-3 py-2 rounded bg-surface-container border border-outline-variant/30"
+                        className="w-full px-3 py-2.5 rounded-xl bg-surface-container border border-outline-variant/30 text-sm"
                       >
                         <option value="">Seleccionar Subcategoría (Opcional)</option>
                         {allCategories.find(c => c.name === newProduct.category)?.subcategories?.map((sub: string) => (
@@ -975,21 +1072,22 @@ function AdminContent() {
                       </select>
                     </div>
                   )}
-                  <input type="number" placeholder="Precio" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className="px-3 py-2 rounded bg-surface-container border border-outline-variant/30" />
+
+                  <div className="relative">
+                    <input type="number" placeholder="Precio" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className="w-full px-3 py-2.5 rounded-xl bg-surface-container border border-outline-variant/30 text-sm" />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-on-surface-variant">€</span>
+                  </div>
                   
                   {newProduct.category.toLowerCase() !== 'ropa' && (
-                    <input type="number" placeholder="Stock" value={newProduct.stock} onChange={e => setNewProduct({...newProduct, stock: e.target.value})} className="px-3 py-2 rounded bg-surface-container border border-outline-variant/30" />
+                    <input type="number" placeholder="Stock" value={newProduct.stock} onChange={e => setNewProduct({...newProduct, stock: e.target.value})} className="px-3 py-2.5 rounded-xl bg-surface-container border border-outline-variant/30 text-sm" />
                   )}
                   
-                  <select value={newProduct.type} onChange={e => setNewProduct({...newProduct, type: e.target.value})} className="px-3 py-2 rounded bg-surface-container border border-outline-variant/30">
-                    <option value="cartas">Cartas</option>
-                    <option value="merchandising">Merchandising</option>
-                  </select>
-                  <label className="flex items-center gap-2 px-3 py-2 cursor-pointer bg-surface-container rounded border border-outline-variant/30">
+                  <label className="flex items-center gap-2 px-3 py-2.5 cursor-pointer bg-surface-container rounded-xl border border-outline-variant/30">
                     <input type="checkbox" checked={newProduct.isFeatured} onChange={e => setNewProduct({...newProduct, isFeatured: e.target.checked})} className="w-4 h-4 accent-primary" />
-                    <span className="text-sm font-medium">Destacado</span>
+                    <span className="text-xs font-bold uppercase tracking-wider">Destacado</span>
                   </label>
-                  <input type="text" placeholder="Etiquetas (separadas por coma)" value={newProduct.tags} onChange={e => setNewProduct({...newProduct, tags: e.target.value})} className="col-span-2 px-3 py-2 rounded bg-surface-container border border-outline-variant/30" />
+                  <input type="text" placeholder="Etiquetas (separadas por coma)" value={newProduct.tags} onChange={e => setNewProduct({...newProduct, tags: e.target.value})} className="col-span-2 px-3 py-2.5 rounded-xl bg-surface-container border border-outline-variant/30 text-sm" />
+                </div>
                   
                   {newProduct.category.toLowerCase() === 'ropa' && (
                     <div className="col-span-2 bg-surface-container border border-outline-variant/30 px-4 py-3 rounded">
@@ -1695,18 +1793,29 @@ function AdminContent() {
             {showAddCategory && (
               <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/30 shadow-md animate-in fade-in slide-in-from-top-4 duration-300">
                 <h3 className="font-bold mb-4">{editingCategory ? 'Editar Categoría' : 'Añadir Categoría'}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-xs font-bold uppercase mb-1">Nombre</label>
-                    <input 
-                      type="text" 
-                      value={newCategory.name} 
-                      onChange={e => setNewCategory({...newCategory, name: e.target.value})}
-                      placeholder="Ej: TCG, Merchandising..."
-                      className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm"
-                    />
+                    <label className="block text-sm font-bold text-on-surface-variant mb-2">Sección</label>
+                    <select 
+                      value={newCategory.section || 'merchandising'}
+                      onChange={(e) => setNewCategory({...newCategory, section: e.target.value})}
+                      className="w-full p-4 bg-surface-container-highest border border-outline-variant rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="cartas">Cartas</option>
+                      <option value="merchandising">Merchandising</option>
+                    </select>
                   </div>
                   <div>
+                    <label className="block text-sm font-bold text-on-surface-variant mb-2">Nombre de la Categoría</label>
+                    <input 
+                      type="text" 
+                      value={newCategory.name}
+                      onChange={(e) => setNewCategory({...newCategory, name: e.target.value})}
+                      className="w-full p-4 bg-surface-container-highest border border-outline-variant rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary"
+                      placeholder="Ej: Figuras, Mazos..."
+                    />
+                  </div>
+                  <div className="md:col-span-2">
                     <label className="block text-xs font-bold uppercase mb-1">Subcategorías (separadas por coma)</label>
                     <input 
                       type="text" 
@@ -1732,6 +1841,7 @@ function AdminContent() {
                   <thead className="bg-surface-container/50 text-on-surface-variant text-xs font-bold uppercase">
                     <tr>
                       <th className="px-6 py-4">Nombre</th>
+                      <th className="px-6 py-4">Sección</th>
                       <th className="px-6 py-4">Subcategorías</th>
                       <th className="px-6 py-4 text-right">Acciones</th>
                     </tr>
@@ -1744,6 +1854,11 @@ function AdminContent() {
                         <tr key={cat.id} className="hover:bg-surface-container/30 transition-colors group">
                           <td className="px-6 py-4 font-bold">{cat.name}</td>
                           <td className="px-6 py-4">
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${cat.section === 'cartas' ? 'bg-primary/20 text-primary' : 'bg-secondary/20 text-secondary'}`}>
+                              {cat.section || 'merchandising'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
                             <div className="flex flex-wrap gap-1">
                               {cat.subcategories?.map((sub: string, i: number) => (
                                 <span key={i} className="px-2 py-0.5 bg-surface-container border border-outline-variant/30 rounded text-[10px] font-bold uppercase">{sub}</span>
@@ -1755,7 +1870,11 @@ function AdminContent() {
                               <button 
                                 onClick={() => {
                                   setEditingCategory(cat);
-                                  setNewCategory({ name: cat.name, subcategories: cat.subcategories?.join(', ') || '' });
+                                  setNewCategory({ 
+                                    name: cat.name, 
+                                    subcategories: cat.subcategories?.join(', ') || '',
+                                    section: cat.section || 'merchandising'
+                                  });
                                   setShowAddCategory(true);
                                 }}
                                 className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
@@ -1864,6 +1983,28 @@ function AdminContent() {
                       onChange={e => updateLocalField('home', 'heroSubtitle', e.target.value)}
                       className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm font-medium h-20 resize-none"
                     ></textarea>
+                  </div>
+
+                  {/* Visual Preview for Hero */}
+                  <div className="mt-4 space-y-2">
+                    <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Vista Previa del Cabezal</label>
+                    <div className="relative h-48 rounded-2xl overflow-hidden bg-black flex items-center justify-center text-center p-4 shadow-inner border border-outline-variant/20">
+                      <img 
+                        src={homeData.heroImage || "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=2000"} 
+                        alt="Preview" 
+                        className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay"
+                      />
+                      <div className="relative z-10">
+                        <h4 className="text-white font-headline text-lg md:text-xl font-black mb-2 leading-tight tracking-tight px-4 drop-shadow-lg">
+                          {homeData.heroTitle || "Título de ejemplo"}
+                        </h4>
+                        <p className="text-white/80 text-[10px] md:text-xs max-w-[250px] mx-auto line-clamp-2 px-4 font-medium drop-shadow-md">
+                          {homeData.heroSubtitle || 'Tu tienda de confianza de Final Fantasy'}
+                        </p>
+                      </div>
+                      <div className="absolute inset-0 border-2 border-primary/20 rounded-2xl pointer-events-none"></div>
+                    </div>
+                    <p className="text-[9px] text-on-surface-variant italic text-center">Vista previa: Así se verá el título sobre la imagen de fondo.</p>
                   </div>
                   <div className="border-t border-outline-variant/20 pt-4 space-y-4">
                     <p className="text-xs font-black uppercase tracking-widest text-primary">Banner de noticias</p>
@@ -2006,7 +2147,13 @@ function AdminContent() {
                   <div className="relative w-full rounded-2xl overflow-hidden border border-outline-variant/30" style={{ aspectRatio: '16/7', background: '#1a1a2e' }}>
                     <div className="absolute inset-0 bg-gradient-to-b from-primary/20 to-background z-10 pointer-events-none"></div>
                     {homeData.heroImage ? (
-                      <img src={homeData.heroImage} alt="Preview Hero" className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-30 scale-105" />
+                      <>
+                        <img src={homeData.heroImage} alt="Preview Hero" className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-30 scale-105" />
+                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center p-4">
+                          <h4 className="text-white font-headline text-xl font-black mb-2 drop-shadow-lg px-6">{homeData.heroTitle || t.home.heroTitle}</h4>
+                          <p className="text-white/80 text-xs font-medium drop-shadow-md px-10 line-clamp-2 max-w-md">{homeData.heroSubtitle || t.home.heroSubtitle}</p>
+                        </div>
+                      </>
                     ) : (
                       <div className="absolute inset-0 flex flex-col items-center justify-center text-white/20 bg-gradient-to-br from-surface-container to-surface-container-high">
                         <span className="material-symbols-outlined text-4xl">image</span>

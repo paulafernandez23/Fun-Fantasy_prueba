@@ -20,21 +20,31 @@ export default function Cartas() {
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [selectedExpansions, setSelectedExpansions] = useState<string[]>([]);
   const [visibleCount, setVisibleCount] = useState(9);
+  const [dynamicCategories, setDynamicCategories] = useState<string[]>([]);
 
   useEffect(() => {
-    const fetchCards = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const q = query(collection(db, 'products'), where('type', '==', 'cartas'));
-        const snapshot = await getDocs(q);
-        setAllCards(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        // Fetch products
+        const pq = query(collection(db, 'products'), where('type', '==', 'cartas'));
+        const pSnap = await getDocs(pq);
+        setAllCards(pSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+
+        // Fetch categories for this section
+        const cq = query(collection(db, 'categories'), where('section', '==', 'cartas'));
+        const cSnap = await getDocs(cq);
+        const fetchedCats = cSnap.docs
+          .map(doc => doc.data().name)
+          .filter(name => typeof name === 'string' && name.trim() !== '');
+        setDynamicCategories(fetchedCats);
       } catch (error) {
-        console.error('Error fetching cards:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchCards();
+    fetchData();
 
     // SEO
     updateMetaTags({
@@ -73,7 +83,7 @@ export default function Cartas() {
       .filter(exp => exp)
   )) as string[]).sort();
 
-  const tabs = [t.cards.filterAll, t.cards.filterSingles, t.cards.filterDecks];
+  const tabs = [t.cards.filterAll, ...dynamicCategories];
 
   return (
     <div className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">

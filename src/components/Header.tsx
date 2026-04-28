@@ -38,22 +38,8 @@ export default function Header() {
         
         <nav className="hidden md:flex gap-6">
           <Link to="/" className="text-on-surface-variant hover:text-primary transition-colors font-medium">{t.nav.home}</Link>
-          {categories.length > 0 ? (
-            categories.map(cat => (
-              <Link 
-                key={cat.id} 
-                to={`/productos?category=${cat.name}`} 
-                className="text-on-surface-variant hover:text-primary transition-colors font-medium"
-              >
-                {cat.name}
-              </Link>
-            ))
-          ) : (
-            <>
-              <Link to="/cartas" className="text-on-surface-variant hover:text-primary transition-colors font-medium">{t.nav.tcg}</Link>
-              <Link to="/merchandising" className="text-on-surface-variant hover:text-primary transition-colors font-medium">{t.nav.merch}</Link>
-            </>
-          )}
+          <Link to="/cartas" className="text-on-surface-variant hover:text-primary transition-colors font-medium">{t.nav.tcg}</Link>
+          <Link to="/merchandising" className="text-on-surface-variant hover:text-primary transition-colors font-medium">{t.nav.merch}</Link>
           <Link to="/noticias" className="text-on-surface-variant hover:text-primary transition-colors font-medium">{t.nav.news || 'Noticias'}</Link>
           <Link to="/contacto" className="text-on-surface-variant hover:text-primary transition-colors font-medium">{t.nav.contact}</Link>
         </nav>

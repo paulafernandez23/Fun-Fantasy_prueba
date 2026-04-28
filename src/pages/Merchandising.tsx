@@ -15,21 +15,31 @@ export default function Merchandising() {
   const [activeTab, setActiveTab] = useState(t.cards.filterAll);
   const [searchQuery, setSearchQuery] = useState('');
   const [visibleCount, setVisibleCount] = useState(9);
+  const [dynamicCategories, setDynamicCategories] = useState<string[]>([]);
 
   useEffect(() => {
-    const fetchMerch = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const q = query(collection(db, 'products'), where('type', '==', 'merchandising'));
-        const snapshot = await getDocs(q);
-        setAllItems(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        // Fetch products
+        const pq = query(collection(db, 'products'), where('type', '==', 'merchandising'));
+        const pSnap = await getDocs(pq);
+        setAllItems(pSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+
+        // Fetch categories for this section
+        const cq = query(collection(db, 'categories'), where('section', '==', 'merchandising'));
+        const cSnap = await getDocs(cq);
+        const fetchedCats = cSnap.docs
+          .map(doc => doc.data().name)
+          .filter(name => typeof name === 'string' && name.trim() !== '');
+        setDynamicCategories(fetchedCats);
       } catch (error) {
-        console.error('Error fetching merchandising:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchMerch();
+    fetchData();
 
     // SEO
     updateMetaTags({
@@ -46,7 +56,7 @@ export default function Merchandising() {
     return matchesTab && matchesSearch;
   });
 
-  const tabs = [t.cards.filterAll, ...new Set(allItems.map(item => item.category))];
+  const tabs = [t.cards.filterAll, ...dynamicCategories];
 
   return (
     <div className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
