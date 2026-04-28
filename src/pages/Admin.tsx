@@ -1053,8 +1053,7 @@ function AdminContent() {
                     <span className="text-xs font-bold uppercase tracking-wider">Destacado</span>
                   </label>
                   <input type="text" placeholder="Etiquetas (separadas por coma)" value={newProduct.tags} onChange={e => setNewProduct({...newProduct, tags: e.target.value})} className="col-span-2 px-3 py-2.5 rounded-xl bg-surface-container border border-outline-variant/30 text-sm" />
-                </div>
-                  
+
                   {newProduct.category.toLowerCase() === 'ropa' && (
                     <div className="col-span-2 bg-surface-container border border-outline-variant/30 px-4 py-3 rounded">
                       <span className="block text-sm mb-2 text-on-surface-variant font-medium">Inventario por Tallas:</span>
