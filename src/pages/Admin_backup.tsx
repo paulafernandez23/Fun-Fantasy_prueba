@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { auth, db, storage } from '../lib/firebase';
 import { getSEOImageUrl } from '../lib/seoUtils';
@@ -6,7 +6,6 @@ import { signInWithEmailAndPassword, signOut, onAuthStateChanged, User } from 'f
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp, orderBy, query, where, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useSettingsStore } from '../store/settingsStore';
-import { translations } from '../lib/translations';
 import { getAppointments, updateAppointmentStatus, formatDate, type Appointment } from '../lib/chatbot/appointmentService';
 import { getAllSubscribers, type NewsletterSubscriber, unsubscribeFromNewsletter } from '../lib/chatbot/newsletterService';
 import { getAllLoyaltyUsers, addPoints, type LoyaltyAccount, getLoyaltyConfig, updateLoyaltyConfig, type LoyaltyConfig, deleteLoyaltyAccount } from '../lib/chatbot/loyaltyService';
@@ -21,9 +20,9 @@ function AdminContent() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   
   const config = useSettingsStore();
-  const storeSymbol = config.mainCurrency.includes('€') ? '€' : config.mainCurrency.includes('£') ? '£' : '$';
+  const storeSymbol = config.mainCurrency.includes('Ôé¼') ? 'Ôé¼' : config.mainCurrency.includes('┬ú') ? '┬ú' : '$';
 
-  // Función segura para parsear fechas de Firestore (Timestamp o string)
+  // Funci├│n segura para parsear fechas de Firestore (Timestamp o string)
   const toDate = (date: any) => {
     if (!date) return new Date();
     if (typeof date.toDate === 'function') return date.toDate();
@@ -42,7 +41,7 @@ function AdminContent() {
   // New States for Contact Messages and Legal Pages
   const [allMessages, setAllMessages] = useState<any[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
-  const [messageFilter, setMessageFilter] = useState('Todos'); // Todos, Leídos, No Leídos
+  const [messageFilter, setMessageFilter] = useState('Todos'); // Todos, Le├¡dos, No Le├¡dos
   const [selectedMessage, setSelectedMessage] = useState<any | null>(null);
 
   const [legalPages, setLegalPages] = useState<any[]>([]);
@@ -184,28 +183,28 @@ function AdminContent() {
           snap.docs.forEach(d => { fetched[d.id] = d.data(); });
           setSiteContent(fetched);
           
-          const siteFallbackHome = {
-            heroTitle: translations[config.language].home.heroTitle,
-            heroSubtitle: translations[config.language].home.heroSubtitle,
-            heroImage: '',
-            newsTitle: "¿Buscas las últimas noticias?",
-            newsDescription: "Entérate de los nuevos lanzamientos de TCG y eventos de la comunidad.",
-            newsButtonText: "Ir a Noticias",
-            newsButtonUrl: "/noticias",
-            newsBannerImage: ''
+          const t = translations[config.language];
+          
+          // Initial content with proper fallbacks
+          const homeMerged = { 
+            heroTitle: fetched['home']?.heroTitle ?? t.home.heroTitle,
+            heroSubtitle: fetched['home']?.heroSubtitle ?? t.home.heroSubtitle,
+            heroImage: fetched['home']?.heroImage ?? '',
+            newsTitle: fetched['home']?.newsTitle ?? "┬┐Buscas las ├║ltimas noticias?",
+            newsDescription: fetched['home']?.newsDescription ?? "Ent├®rate de los nuevos lanzamientos de TCG y eventos de la comunidad.",
+            newsButtonText: fetched['home']?.newsButtonText ?? "Ir a Noticias",
+            newsButtonUrl: fetched['home']?.newsButtonUrl ?? "/noticias",
+            newsBannerImage: fetched['home']?.newsBannerImage ?? ''
           };
           
-          const siteFallbackContacto = { 
-            title: translations[config.language].contact.title,
-            email: "soporte@esfantasia.es",
-            phone: "+34 602 413 055",
-            location: "Murcia, España",
-            address: '',
-            schedule: ''
+          const contactoMerged = { 
+            title: fetched['contacto']?.title ?? t.contact.title,
+            email: fetched['contacto']?.email ?? "soporte@esfantasia.es",
+            phone: fetched['contacto']?.phone ?? "+34 602 413 055",
+            location: fetched['contacto']?.location ?? "Murcia, Espa├▒a",
+            address: fetched['contacto']?.address ?? '',
+            schedule: fetched['contacto']?.schedule ?? ''
           };
-          
-          const homeMerged = { ...siteFallbackHome, ...(fetched['home'] || {}) };
-          const contactoMerged = { ...siteFallbackContacto, ...(fetched['contacto'] || {}) };
           
           setLocalCMS({ 
             ...fetched, 
@@ -225,7 +224,7 @@ function AdminContent() {
     }
   }, [activeTab, config.language]);
 
-  // Cálculos derivados de los datos reales
+  // C├ílculos derivados de los datos reales
   const totalSales = allOrders.reduce((sum, order) => sum + (Number(order.total) || 0), 0);
   
   const todayStr = new Date().toISOString().split('T')[0];
@@ -239,7 +238,7 @@ function AdminContent() {
     }
   });
 
-  // Cálculo de ventas para la gráfica (últimos 7 días)
+  // C├ílculo de ventas para la gr├ífica (├║ltimos 7 d├¡as)
   const salesHistory = useMemo(() => {
     const days = [];
     for (let i = 6; i >= 0; i--) {
@@ -292,7 +291,7 @@ function AdminContent() {
 
   const lowStockProducts = allProducts.filter(p => Number(p.stock) < 5);
   
-  // Conteo de usuarios únicos (fidelidad + pedidos)
+  // Conteo de usuarios ├║nicos (fidelidad + pedidos)
   const uniqueCustomerEmails = new Set([
     ...allLoyaltyUsers.map(u => u.email),
     ...allOrders.map(o => o.customer_email).filter(Boolean)
@@ -541,10 +540,10 @@ function AdminContent() {
       setShowAddCategory(false);
       setEditingCategory(null);
       setNewCategory({ name: '', subcategories: '', section: 'merchandising' });
-      showAlert('Éxito', 'Categoría guardada correctamente.');
+      showAlert('├ëxito', 'Categor├¡a guardada correctamente.');
     } catch (error) {
       console.error(error);
-      showAlert('Error', 'No se pudo guardar la categoría.');
+      showAlert('Error', 'No se pudo guardar la categor├¡a.');
     } finally {
       setIsSaving(false);
     }
@@ -647,7 +646,7 @@ function AdminContent() {
         [pageId]: data 
       }));
       
-      showAlert('Éxito', `El contenido de ${pageId === 'home' ? 'Inicio' : 'Contacto'} se ha guardado correctamente.`);
+      showAlert('├ëxito', `El contenido de ${pageId === 'home' ? 'Inicio' : 'Contacto'} se ha guardado correctamente.`);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error: any) {
@@ -923,7 +922,7 @@ function AdminContent() {
             <div className="p-6 border-b border-outline-variant/20 flex flex-col gap-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                  <h2 className="font-bold text-lg">Gestión de Productos</h2>
+                  <h2 className="font-bold text-lg">Gesti├│n de Productos</h2>
                   <p className="text-sm text-on-surface-variant">Inventario total: {allProducts.length}</p>
                 </div>
                 <div className="flex flex-wrap gap-3">
@@ -951,7 +950,7 @@ function AdminContent() {
                     className="px-4 py-2 bg-primary text-on-primary rounded-lg font-bold hover:bg-primary/90 transition-colors flex items-center gap-2 text-sm shrink-0"
                   >
                     <span className="material-symbols-outlined text-[18px]">add</span>
-                    Añadir Producto
+                    A├▒adir Producto
                   </button>
                 </div>
               </div>
@@ -973,7 +972,7 @@ function AdminContent() {
                   onChange={e => setCategoryFilter(e.target.value)}
                   className="bg-surface-container-high border border-outline-variant/30 rounded-xl px-3 py-2 text-sm outline-none font-medium"
                 >
-                  <option value="Todas">Todas las categorías</option>
+                  <option value="Todas">Todas las categor├¡as</option>
                   {allCategories.map(cat => (
                     <option key={cat.id} value={cat.name}>{cat.name} ({cat.section})</option>
                   ))}
@@ -1007,13 +1006,13 @@ function AdminContent() {
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Categoría</label>
+                      <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Categor├¡a</label>
                       <select 
                         value={newProduct.category} 
                         onChange={e => setNewProduct({...newProduct, category: e.target.value, subcategory: ''})} 
                         className="w-full px-3 py-2.5 rounded-xl bg-surface-container border border-outline-variant/30 text-sm font-bold"
                       >
-                        <option value="">Seleccionar Categoría</option>
+                        <option value="">Seleccionar Categor├¡a</option>
                         {allCategories.filter(cat => !cat.section || cat.section === newProduct.type).map(cat => (
                           <option key={cat.id} value={cat.name}>{cat.name}</option>
                         ))}
@@ -1021,17 +1020,17 @@ function AdminContent() {
                     </div>
                   </div>
 
-                  <input type="text" placeholder="Título" value={newProduct.title} onChange={e => setNewProduct({...newProduct, title: e.target.value})} className="px-3 py-2.5 rounded-xl bg-surface-container border border-outline-variant/30 text-sm" />
+                  <input type="text" placeholder="T├¡tulo" value={newProduct.title} onChange={e => setNewProduct({...newProduct, title: e.target.value})} className="px-3 py-2.5 rounded-xl bg-surface-container border border-outline-variant/30 text-sm" />
                   
                   {newProduct.category && allCategories.find(c => c.name === newProduct.category)?.subcategories?.length > 0 && (
                     <div className="col-span-2">
-                      <label className="block text-[10px] font-bold uppercase mb-1 ml-1 text-on-surface-variant">Subcategoría</label>
+                      <label className="block text-[10px] font-bold uppercase mb-1 ml-1 text-on-surface-variant">Subcategor├¡a</label>
                       <select 
                         value={newProduct.subcategory} 
                         onChange={e => setNewProduct({...newProduct, subcategory: e.target.value})} 
                         className="w-full px-3 py-2.5 rounded-xl bg-surface-container border border-outline-variant/30 text-sm"
                       >
-                        <option value="">Seleccionar Subcategoría (Opcional)</option>
+                        <option value="">Seleccionar Subcategor├¡a (Opcional)</option>
                         {allCategories.find(c => c.name === newProduct.category)?.subcategories?.map((sub: string) => (
                           <option key={sub} value={sub}>{sub}</option>
                         ))}
@@ -1041,7 +1040,7 @@ function AdminContent() {
 
                   <div className="relative">
                     <input type="number" placeholder="Precio" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className="w-full px-3 py-2.5 rounded-xl bg-surface-container border border-outline-variant/30 text-sm" />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-on-surface-variant">€</span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-on-surface-variant">Ôé¼</span>
                   </div>
                   
                   {newProduct.category.toLowerCase() !== 'ropa' && (
@@ -1076,7 +1075,7 @@ function AdminContent() {
                   )}
 
                   <input type="file" accept="image/*" onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewImage(e.target.files ? e.target.files[0] : null)} className="col-span-2 block w-full text-sm text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-primary file:text-on-primary cursor-pointer" />
-                  <textarea placeholder="Descripción" value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} className="col-span-2 px-3 py-2 rounded bg-surface-container border border-outline-variant/30 resize-none h-20" />
+                  <textarea placeholder="Descripci├│n" value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} className="col-span-2 px-3 py-2 rounded bg-surface-container border border-outline-variant/30 resize-none h-20" />
                 </div>
                 <div className="mt-4 flex gap-2 justify-end">
                   <button onClick={() => setShowAddProduct(false)} className="px-4 py-2 font-medium">Cancelar</button>
@@ -1092,7 +1091,7 @@ function AdminContent() {
                 <thead>
                   <tr className="bg-surface-container-low text-on-surface-variant text-sm">
                     <th className="p-4 font-medium">Producto</th>
-                    <th className="p-4 font-medium">Categoría</th>
+                    <th className="p-4 font-medium">Categor├¡a</th>
                     <th className="p-4 font-medium">Precio</th>
                     <th className="p-4 font-medium">Stock</th>
                     <th className="p-4 font-medium text-right">Acciones</th>
@@ -1154,7 +1153,7 @@ function AdminContent() {
                         <button className="text-error p-2 hover:bg-error/10 rounded-full transition-colors" onClick={() => {
                           showConfirm(
                             'Eliminar Producto',
-                            `¿Estás seguro de que quieres eliminar "${prod.title}"?`,
+                            `┬┐Est├ís seguro de que quieres eliminar "${prod.title}"?`,
                             async () => {
                               await deleteDoc(doc(db, 'products', prod.id));
                               setAllProducts(prev => prev.filter(p => p.id !== prod.id));
@@ -1248,7 +1247,7 @@ function AdminContent() {
               <div className="p-6 border-b border-outline-variant/20 bg-surface-container-high">
                 <h3 className="font-bold mb-4">{editingNewsId ? 'Editar Noticia' : 'Crear Nueva Noticia'}</h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <input type="text" placeholder="Título" value={newNews.title} onChange={e => setNewNews({...newNews, title: e.target.value})} className="col-span-2 px-3 py-2 rounded bg-surface-container border border-outline-variant/30" />
+                  <input type="text" placeholder="T├¡tulo" value={newNews.title} onChange={e => setNewNews({...newNews, title: e.target.value})} className="col-span-2 px-3 py-2 rounded bg-surface-container border border-outline-variant/30" />
                   <select value={newNews.category} onChange={e => setNewNews({...newNews, category: e.target.value})} className="px-3 py-2 rounded bg-surface-container border border-outline-variant/30">
                     <option value="General">General</option>
                     <option value="Eventos">Eventos</option>
@@ -1273,7 +1272,7 @@ function AdminContent() {
                 <thead>
                   <tr className="bg-surface-container-low text-on-surface-variant text-sm">
                     <th className="p-4 font-medium">Noticia</th>
-                    <th className="p-4 font-medium">Categoría</th>
+                    <th className="p-4 font-medium">Categor├¡a</th>
                     <th className="p-4 font-medium">Fecha</th>
                     <th className="p-4 font-medium text-right">Acciones</th>
                   </tr>
@@ -1298,7 +1297,7 @@ function AdminContent() {
                         <button className="text-error p-2 hover:bg-error/10 rounded-full transition-colors" onClick={() => {
                           showConfirm(
                             'Eliminar Noticia',
-                            `¿Estás seguro de eliminar "${news.title}"?`,
+                            `┬┐Est├ís seguro de eliminar "${news.title}"?`,
                             async () => {
                               await deleteDoc(doc(db, 'news', news.id));
                               setAllNews(prev => prev.filter(n => n.id !== news.id));
@@ -1319,7 +1318,7 @@ function AdminContent() {
         return (
           <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-outline-variant/20">
-              <h2 className="font-bold text-lg">Citas de Valoración</h2>
+              <h2 className="font-bold text-lg">Citas de Valoraci├│n</h2>
               <p className="text-sm text-on-surface-variant mt-1">Solicitudes recibidas desde el chatbot.</p>
             </div>
             {appointmentsLoading ? (
@@ -1338,7 +1337,7 @@ function AdminContent() {
                         </span>
                       </div>
                       <p className="text-sm text-on-surface-variant flex items-center gap-1">
-                        <span className="material-symbols-outlined text-sm">calendar_today</span> {formatDate(appt.date)} — {appt.time}h | {appt.contact}
+                        <span className="material-symbols-outlined text-sm">calendar_today</span> {formatDate(appt.date)} ÔÇö {appt.time}h | {appt.contact}
                       </p>
                       <p className="text-sm text-on-surface-variant"><span className="font-medium text-on-surface">Material:</span> {appt.cardDescription}</p>
                     </div>
@@ -1362,7 +1361,7 @@ function AdminContent() {
               {loyaltyConfig && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Puntos por 1€</label>
+                    <label className="block text-sm font-medium mb-1">Puntos por 1Ôé¼</label>
                     <input type="number" value={loyaltyConfig.pointsPerEuro} onChange={e => setLoyaltyConfig({...loyaltyConfig, pointsPerEuro: parseInt(e.target.value) || 1})} className="w-full px-4 py-2 bg-surface-container rounded-lg border border-outline-variant/30 outline-none" />
                   </div>
                   <div>
@@ -1371,10 +1370,10 @@ function AdminContent() {
                   </div>
                   <div className="flex gap-4">
                     <div className="flex-grow">
-                      <label className="block text-sm font-medium mb-1">Valor canje (€)</label>
+                      <label className="block text-sm font-medium mb-1">Valor canje (Ôé¼)</label>
                       <input type="number" value={loyaltyConfig.rewardAmount} onChange={e => setLoyaltyConfig({...loyaltyConfig, rewardAmount: parseInt(e.target.value) || 1})} className="w-full px-4 py-2 bg-surface-container rounded-lg border border-outline-variant/30 outline-none" />
                     </div>
-                    <button onClick={async () => { await updateLoyaltyConfig(loyaltyConfig); showAlert('Éxito', 'Configuración actualizada.'); }} className="px-6 py-2 bg-secondary text-on-secondary rounded-lg font-bold hover:bg-secondary/90 transition-colors">Actualizar</button>
+                    <button onClick={async () => { await updateLoyaltyConfig(loyaltyConfig); showAlert('├ëxito', 'Configuraci├│n actualizada.'); }} className="px-6 py-2 bg-secondary text-on-secondary rounded-lg font-bold hover:bg-secondary/90 transition-colors">Actualizar</button>
                   </div>
                 </div>
               )}
@@ -1416,13 +1415,13 @@ function AdminContent() {
                             <p className="text-xs text-primary">{sub.email}</p>
                           </div>
                         </div>
-                        <button onClick={() => showConfirm('Eliminar', `¿Borrar a ${sub.name}?`, async () => { await unsubscribeFromNewsletter(sub.email); loadData(); })} className="p-2 text-on-surface-variant hover:text-error opacity-0 group-hover:opacity-100 transition-all"><span className="material-symbols-outlined text-[18px]">delete</span></button>
+                        <button onClick={() => showConfirm('Eliminar', `┬┐Borrar a ${sub.name}?`, async () => { await unsubscribeFromNewsletter(sub.email); loadData(); })} className="p-2 text-on-surface-variant hover:text-error opacity-0 group-hover:opacity-100 transition-all"><span className="material-symbols-outlined text-[18px]">delete</span></button>
                       </div>
                     ))}
                   </div>
                 </div>
                 <div className="p-6 border-t border-outline-variant/20 shrink-0">
-                   <h3 className="text-sm font-bold mb-3">Redactar Envío</h3>
+                   <h3 className="text-sm font-bold mb-3">Redactar Env├¡o</h3>
                    <input type="text" placeholder="Asunto" value={newsletterSubject} onChange={e => setNewsletterSubject(e.target.value)} className="w-full px-4 py-2 bg-surface-container rounded-lg border border-outline-variant/30 mb-3 outline-none text-sm" />
                    <textarea placeholder="Contenido..." value={newsletterContent} onChange={e => setNewsletterContent(e.target.value)} className="w-full px-4 py-2 bg-surface-container rounded-lg border border-outline-variant/30 mb-4 h-24 outline-none text-sm resize-none"></textarea>
                    <button onClick={handleSendNewsletter} disabled={isSendingNewsletter || selectedSubscribers.size === 0} className="w-full py-2 bg-primary text-on-primary rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-50">
@@ -1484,7 +1483,7 @@ function AdminContent() {
                         </div>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
                           <button onClick={async () => { await addPoints(u.email, 10); loadData(); }} className="w-7 h-7 flex items-center justify-center rounded-full bg-secondary/10 text-secondary hover:bg-secondary/20 transition-colors"><span className="material-symbols-outlined text-[16px]">add</span></button>
-                          <button onClick={() => showConfirm('Eliminar', `¿Quitar a ${u.name} del club?`, async () => { await deleteLoyaltyAccount(u.email); loadData(); })} className="w-7 h-7 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-error/10 hover:text-error transition-colors"><span className="material-symbols-outlined text-[16px]">person_remove</span></button>
+                          <button onClick={() => showConfirm('Eliminar', `┬┐Quitar a ${u.name} del club?`, async () => { await deleteLoyaltyAccount(u.email); loadData(); })} className="w-7 h-7 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-error/10 hover:text-error transition-colors"><span className="material-symbols-outlined text-[16px]">person_remove</span></button>
                         </div>
                       </div>
                     ))}
@@ -1503,7 +1502,7 @@ function AdminContent() {
                 <p className="text-sm text-on-surface-variant mt-1">Mensajes del formulario de contacto.</p>
               </div>
               <div className="flex gap-2">
-                {['Todos', 'No Leídos', 'Leídos'].map(filter => (
+                {['Todos', 'No Le├¡dos', 'Le├¡dos'].map(filter => (
                   <button
                     key={filter}
                     onClick={() => setMessageFilter(filter)}
@@ -1535,7 +1534,7 @@ function AdminContent() {
                   </thead>
                   <tbody className="text-sm divide-y divide-outline-variant/10">
                     {allMessages
-                      .filter(m => messageFilter === 'Todos' || (messageFilter === 'Leídos' ? m.read : !m.read))
+                      .filter(m => messageFilter === 'Todos' || (messageFilter === 'Le├¡dos' ? m.read : !m.read))
                       .map(m => (
                       <tr key={m.id} className={`hover:bg-surface-container-lowest transition-colors group ${!m.read ? 'font-bold bg-primary/5' : ''}`}>
                         <td className="p-4">
@@ -1556,7 +1555,7 @@ function AdminContent() {
                             <span className="material-symbols-outlined text-[20px]">visibility</span>
                           </button>
                           <button className="text-error p-2 hover:bg-error/10 rounded-full transition-colors opacity-0 group-hover:opacity-100" onClick={() => {
-                            showConfirm('Eliminar Mensaje', '¿Seguro que quieres borrar este mensaje?', async () => {
+                            showConfirm('Eliminar Mensaje', '┬┐Seguro que quieres borrar este mensaje?', async () => {
                               await deleteDoc(doc(db, 'contact_messages', m.id));
                               setAllMessages(prev => prev.filter(msg => msg.id !== m.id));
                             });
@@ -1615,14 +1614,14 @@ function AdminContent() {
         return (
           <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden flex flex-col h-full">
             <div className="p-6 border-b border-outline-variant/20 shrink-0">
-              <h2 className="font-bold text-lg">Páginas y Legal</h2>
-              <p className="text-sm text-on-surface-variant mt-1">Edita el contenido de las páginas estáticas.</p>
+              <h2 className="font-bold text-lg">P├íginas y Legal</h2>
+              <p className="text-sm text-on-surface-variant mt-1">Edita el contenido de las p├íginas est├íticas.</p>
             </div>
             
             {editingPageId ? (
               <div className="flex-grow flex flex-col overflow-hidden">
                 <div className="p-4 border-b border-outline-variant/20 flex justify-between items-center bg-surface-container-low shrink-0">
-                  <h3 className="font-bold">Editando: {editingPageId === 'politica-privacidad' ? 'Política de Privacidad' : editingPageId === 'terminos-venta' ? 'Términos de Venta' : editingPageId === 'envios-devoluciones' ? 'Envíos y Devoluciones' : 'Preguntas Frecuentes'}</h3>
+                  <h3 className="font-bold">Editando: {editingPageId === 'politica-privacidad' ? 'Pol├¡tica de Privacidad' : editingPageId === 'terminos-venta' ? 'T├®rminos de Venta' : editingPageId === 'envios-devoluciones' ? 'Env├¡os y Devoluciones' : 'Preguntas Frecuentes'}</h3>
                   <div className="flex gap-2">
                     <button onClick={() => setEditingPageId(null)} className="px-4 py-2 font-medium">Cancelar</button>
                     <button onClick={async () => {
@@ -1640,11 +1639,11 @@ function AdminContent() {
                         });
                         setSaveSuccess(true);
                         setTimeout(() => setSaveSuccess(false), 3000);
-                        showAlert('Guardado', 'La página se ha actualizado correctamente.');
+                        showAlert('Guardado', 'La p├ígina se ha actualizado correctamente.');
                         setEditingPageId(null);
                       } catch (err) {
                         console.error('Error saving page:', err);
-                        showAlert('Error', 'No se pudo guardar la página.');
+                        showAlert('Error', 'No se pudo guardar la p├ígina.');
                       } finally {
                         setIsSaving(false);
                       }
@@ -1674,7 +1673,7 @@ function AdminContent() {
                             newFaqs[idx].question = e.target.value;
                             setEditingPageContent(newFaqs);
                           }} className="w-full px-3 py-2 rounded bg-surface-container-lowest border border-outline-variant/30" />
-                          <textarea placeholder="Respuesta (Soporta HTML básico)" value={faq.answer} onChange={e => {
+                          <textarea placeholder="Respuesta (Soporta HTML b├ísico)" value={faq.answer} onChange={e => {
                             const newFaqs = [...editingPageContent];
                             newFaqs[idx].answer = e.target.value;
                             setEditingPageContent(newFaqs);
@@ -1685,17 +1684,17 @@ function AdminContent() {
                         setEditingPageContent([...editingPageContent, { id: Date.now().toString(), question: '', answer: '' }]);
                       }} className="w-full py-3 border-2 border-dashed border-primary/30 rounded-xl text-primary font-medium hover:bg-primary/5 transition-colors flex items-center justify-center gap-2">
                         <span className="material-symbols-outlined">add</span>
-                        Añadir Pregunta
+                        A├▒adir Pregunta
                       </button>
                     </div>
                   ) : (
                     <div className="h-full flex flex-col">
-                      <label className="block text-sm font-bold mb-2">Contenido de la página (HTML soportado)</label>
+                      <label className="block text-sm font-bold mb-2">Contenido de la p├ígina (HTML soportado)</label>
                       <textarea 
                         value={editingPageContent} 
                         onChange={e => setEditingPageContent(e.target.value)} 
                         className="w-full flex-grow p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/30 resize-none font-mono text-sm leading-relaxed"
-                        placeholder="<h1>Título</h1><p>Contenido...</p>"
+                        placeholder="<h1>T├¡tulo</h1><p>Contenido...</p>"
                       />
                     </div>
                   )}
@@ -1705,12 +1704,12 @@ function AdminContent() {
               <div className="flex-grow overflow-auto p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
-                    { id: 'politica-privacidad', title: 'Política de Privacidad', icon: 'policy' },
-                    { id: 'politica-cookies', title: 'Política de Cookies', icon: 'cookie' },
-                    { id: 'terminos-condiciones', title: 'Términos y Condiciones', icon: 'gavel' },
-                    { id: 'terminos-venta', title: 'Términos de Venta', icon: 'receipt_long' },
-                    { id: 'envios-devoluciones', title: 'Envíos y Devoluciones', icon: 'local_shipping' },
-                    { id: 'politica-devolucion', title: 'Política de Devolución', icon: 'assignment_return' },
+                    { id: 'politica-privacidad', title: 'Pol├¡tica de Privacidad', icon: 'policy' },
+                    { id: 'politica-cookies', title: 'Pol├¡tica de Cookies', icon: 'cookie' },
+                    { id: 'terminos-condiciones', title: 'T├®rminos y Condiciones', icon: 'gavel' },
+                    { id: 'terminos-venta', title: 'T├®rminos de Venta', icon: 'receipt_long' },
+                    { id: 'envios-devoluciones', title: 'Env├¡os y Devoluciones', icon: 'local_shipping' },
+                    { id: 'politica-devolucion', title: 'Pol├¡tica de Devoluci├│n', icon: 'assignment_return' },
                     { id: 'actualizaciones-normativa', title: 'Actualizaciones de Normativa', icon: 'update' },
                     { id: 'faq', title: 'Preguntas Frecuentes (FAQ)', icon: 'help_center' },
                   ].map(page => (
@@ -1746,7 +1745,7 @@ function AdminContent() {
         return (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Gestión de Categorías</h2>
+              <h2 className="text-2xl font-bold">Gesti├│n de Categor├¡as</h2>
               <button 
                 onClick={() => { 
                   setShowAddCategory(true); 
@@ -1756,16 +1755,16 @@ function AdminContent() {
                 className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-colors shadow-lg"
               >
                 <span className="material-symbols-outlined">add</span>
-                Nueva Categoría
+                Nueva Categor├¡a
               </button>
             </div>
 
             {showAddCategory && (
               <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/30 shadow-md animate-in fade-in slide-in-from-top-4 duration-300">
-                <h3 className="font-bold mb-4">{editingCategory ? 'Editar Categoría' : 'Añadir Categoría'}</h3>
+                <h3 className="font-bold mb-4">{editingCategory ? 'Editar Categor├¡a' : 'A├▒adir Categor├¡a'}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-bold text-on-surface-variant mb-2">Sección</label>
+                    <label className="block text-sm font-bold text-on-surface-variant mb-2">Secci├│n</label>
                     <select 
                       value={newCategory.section || 'merchandising'}
                       onChange={(e) => setNewCategory({...newCategory, section: e.target.value})}
@@ -1776,7 +1775,7 @@ function AdminContent() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-on-surface-variant mb-2">Nombre de la Categoría</label>
+                    <label className="block text-sm font-bold text-on-surface-variant mb-2">Nombre de la Categor├¡a</label>
                     <input 
                       type="text" 
                       value={newCategory.name}
@@ -1786,7 +1785,7 @@ function AdminContent() {
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-bold uppercase mb-1">Subcategorías (separadas por coma)</label>
+                    <label className="block text-xs font-bold uppercase mb-1">Subcategor├¡as (separadas por coma)</label>
                     <input 
                       type="text" 
                       value={newCategory.subcategories} 
@@ -1811,14 +1810,14 @@ function AdminContent() {
                   <thead className="bg-surface-container/50 text-on-surface-variant text-xs font-bold uppercase">
                     <tr>
                       <th className="px-6 py-4">Nombre</th>
-                      <th className="px-6 py-4">Sección</th>
-                      <th className="px-6 py-4">Subcategorías</th>
+                      <th className="px-6 py-4">Secci├│n</th>
+                      <th className="px-6 py-4">Subcategor├¡as</th>
                       <th className="px-6 py-4 text-right">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant/10">
                     {allCategories.length === 0 ? (
-                      <tr><td colSpan={3} className="px-6 py-12 text-center text-on-surface-variant italic">No hay categorías configuradas.</td></tr>
+                      <tr><td colSpan={3} className="px-6 py-12 text-center text-on-surface-variant italic">No hay categor├¡as configuradas.</td></tr>
                     ) : (
                       allCategories.map(cat => (
                         <tr key={cat.id} className="hover:bg-surface-container/30 transition-colors group">
@@ -1855,8 +1854,8 @@ function AdminContent() {
                                 onClick={() => {
                                   setModal({
                                     show: true,
-                                    title: 'Eliminar Categoría',
-                                    message: `¿Estás seguro de que quieres eliminar la categoría "${cat.name}"? Esto no afectará a los productos pero perderán su clasificación.`,
+                                    title: 'Eliminar Categor├¡a',
+                                    message: `┬┐Est├ís seguro de que quieres eliminar la categor├¡a "${cat.name}"? Esto no afectar├í a los productos pero perder├ín su clasificaci├│n.`,
                                     type: 'confirm',
                                     onConfirm: async () => {
                                       await deleteDoc(doc(db, 'categories', cat.id));
@@ -1904,15 +1903,15 @@ function AdminContent() {
             <div className="mb-8">
               <h2 className="text-3xl font-black text-on-surface flex items-center gap-3">
                 <span className="material-symbols-outlined text-primary text-4xl">web</span>
-                Personalización Web
+                Personalizaci├│n Web
               </h2>
-              <p className="text-on-surface-variant mt-1">Cambia los textos e imágenes que aparecen en tu tienda. Los cambios se guardan al pulsar <strong>Guardar</strong>.</p>
+              <p className="text-on-surface-variant mt-1">Cambia los textos e im├ígenes que aparecen en tu tienda. Los cambios se guardan al pulsar <strong>Guardar</strong>.</p>
             </div>
 
             {/* Aviso informativo */}
             <div className="flex items-start gap-4 p-5 bg-primary/5 border border-primary/20 rounded-2xl">
               <span className="material-symbols-outlined text-primary mt-0.5 shrink-0">tips_and_updates</span>
-              <p className="text-sm text-on-surface-variant"><strong className="text-on-surface">Cómo funciona:</strong> Lo que ves en los campos es exactamente lo que aparece ahora en tu web. Modifica el texto que quieras y pulsa el botón Guardar de esa sección. Los cambios se reflejan en la tienda al instante.</p>
+              <p className="text-sm text-on-surface-variant"><strong className="text-on-surface">C├│mo funciona:</strong> Lo que ves en los campos es exactamente lo que aparece ahora en tu web. Modifica el texto que quieras y pulsa el bot├│n Guardar de esa secci├│n. Los cambios se reflejan en la tienda al instante.</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -1923,7 +1922,7 @@ function AdminContent() {
                     <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                       <span className="material-symbols-outlined">home</span>
                     </div>
-                    Página de Inicio
+                    P├ígina de Inicio
                   </h3>
                   <button
                     onClick={() => handleSaveContent('home')}
@@ -1936,7 +1935,7 @@ function AdminContent() {
                 </div>
                 <div className="p-6 space-y-5 flex-grow">
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-black uppercase tracking-widest text-primary ml-1">Título principal</label>
+                    <label className="block text-xs font-black uppercase tracking-widest text-primary ml-1">T├¡tulo principal</label>
                     <p className="text-[10px] text-on-surface-variant ml-1 mb-1">El texto grande que aparece en la portada de la web.</p>
                     <input
                       type="text"
@@ -1946,8 +1945,8 @@ function AdminContent() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-black uppercase tracking-widest text-primary ml-1">Subtítulo</label>
-                    <p className="text-[10px] text-on-surface-variant ml-1 mb-1">El texto más pequeño que aparece debajo del título.</p>
+                    <label className="block text-xs font-black uppercase tracking-widest text-primary ml-1">Subt├¡tulo</label>
+                    <p className="text-[10px] text-on-surface-variant ml-1 mb-1">El texto m├ís peque├▒o que aparece debajo del t├¡tulo.</p>
                     <textarea
                       value={homeData.heroSubtitle ?? ''}
                       onChange={e => updateLocalField('home', 'heroSubtitle', e.target.value)}
@@ -1966,15 +1965,15 @@ function AdminContent() {
                       />
                       <div className="relative z-10">
                         <h4 className="text-white font-headline text-lg md:text-xl font-black mb-2 leading-tight tracking-tight px-4 drop-shadow-lg">
-                          {homeData.heroTitle || t.home.heroTitle}
+                          {homeData.heroTitle || "T├¡tulo de ejemplo"}
                         </h4>
                         <p className="text-white/80 text-[10px] md:text-xs max-w-[250px] mx-auto line-clamp-2 px-4 font-medium drop-shadow-md">
-                          {homeData.heroSubtitle || t.home.heroSubtitle}
+                          {homeData.heroSubtitle || 'Tu tienda de confianza de Final Fantasy'}
                         </p>
                       </div>
                       <div className="absolute inset-0 border-2 border-primary/20 rounded-2xl pointer-events-none"></div>
                     </div>
-                    <p className="text-[9px] text-on-surface-variant italic text-center">Vista previa: Así se verá el título sobre la imagen de fondo.</p>
+                    <p className="text-[9px] text-on-surface-variant italic text-center">Vista previa: As├¡ se ver├í el t├¡tulo sobre la imagen de fondo.</p>
                   </div>
                   <div className="border-t border-outline-variant/20 pt-4 space-y-4">
                     <p className="text-xs font-black uppercase tracking-widest text-primary">Banner de noticias</p>
@@ -2050,7 +2049,7 @@ function AdminContent() {
                   </div>
                   <div className="space-y-1.5">
                     <label className="block text-xs font-black uppercase tracking-widest text-primary ml-1">Email de contacto</label>
-                    <p className="text-[10px] text-on-surface-variant ml-1 mb-1">El email que se muestra públicamente para que los clientes te escriban.</p>
+                    <p className="text-[10px] text-on-surface-variant ml-1 mb-1">El email que se muestra p├║blicamente para que los clientes te escriban.</p>
                     <input
                       type="email"
                       value={contactData.email ?? ''}
@@ -2059,8 +2058,8 @@ function AdminContent() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-black uppercase tracking-widest text-primary ml-1">Teléfono</label>
-                    <p className="text-[10px] text-on-surface-variant ml-1 mb-1">El teléfono visible en la página de contacto.</p>
+                    <label className="block text-xs font-black uppercase tracking-widest text-primary ml-1">Tel├®fono</label>
+                    <p className="text-[10px] text-on-surface-variant ml-1 mb-1">El tel├®fono visible en la p├ígina de contacto.</p>
                     <input
                       type="text"
                       value={contactData.phone ?? ''}
@@ -2069,8 +2068,8 @@ function AdminContent() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-black uppercase tracking-widest text-primary ml-1">Ubicación / Dirección</label>
-                    <p className="text-[10px] text-on-surface-variant ml-1 mb-1">La dirección que aparece en el mapa de la página de contacto.</p>
+                    <label className="block text-xs font-black uppercase tracking-widest text-primary ml-1">Ubicaci├│n / Direcci├│n</label>
+                    <p className="text-[10px] text-on-surface-variant ml-1 mb-1">La direcci├│n que aparece en el mapa de la p├ígina de contacto.</p>
                     <input
                       type="text"
                       value={contactData.location ?? ''}
@@ -2089,7 +2088,7 @@ function AdminContent() {
                   <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                     <span className="material-symbols-outlined">image</span>
                   </div>
-                  Imágenes y Multimedia
+                  Im├ígenes y Multimedia
                 </h3>
                 <button
                   onClick={() => handleSaveContent('home')}
@@ -2210,14 +2209,14 @@ function AdminContent() {
         return (
           <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden max-w-2xl">
             <div className="p-6 border-b border-outline-variant/20">
-              <h2 className="font-bold text-lg">Configuración de la Tienda</h2>
+              <h2 className="font-bold text-lg">Configuraci├│n de la Tienda</h2>
             </div>
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div><label className="block text-xs font-bold uppercase mb-1">Nombre Tienda</label><input type="text" value={config.storeName} onChange={e => config.updateSettings({ storeName: e.target.value })} className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm" /></div>
                 <div><label className="block text-xs font-bold uppercase mb-1">Email Soporte</label><input type="email" value={config.contactEmail} onChange={e => config.updateSettings({ contactEmail: e.target.value })} className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm" /></div>
               </div>
-              <div><label className="block text-xs font-black uppercase mb-1">Descripción</label><textarea value={config.shortDescription} onChange={e => config.updateSettings({ shortDescription: e.target.value })} className="w-full bg-surface-container border border-outline-variant/30 px-4 py-3 rounded-xl outline-none text-sm h-24 resize-none"></textarea></div>
+              <div><label className="block text-xs font-bold uppercase mb-1">Descripci├│n</label><textarea value={config.shortDescription} onChange={e => config.updateSettings({ shortDescription: e.target.value })} className="w-full bg-surface-container border border-outline-variant/30 px-3 py-2 rounded-lg outline-none text-sm h-20 resize-none"></textarea></div>
               <div className="pt-4 border-t border-outline-variant/20 flex justify-end">
                  <button onClick={handleSaveSettings} disabled={isSaving} className="px-6 py-2 bg-primary text-on-primary rounded-xl font-bold hover:bg-primary/90 transition-colors shadow-md disabled:opacity-50">
                     {isSaving ? 'Guardando...' : 'Guardar Cambios'}
@@ -2233,15 +2232,15 @@ function AdminContent() {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
     { id: 'productos', label: 'Productos', icon: 'inventory_2' },
-    { id: 'categorias', label: 'Categorías', icon: 'category' },
+    { id: 'categorias', label: 'Categor├¡as', icon: 'category' },
     { id: 'contenido', label: 'Contenido Web', icon: 'edit_note' },
     { id: 'pedidos', label: 'Pedidos', icon: 'shopping_bag' },
     { id: 'mensajes', label: 'Mensajes', icon: 'forum' },
     { id: 'citas', label: 'Citas', icon: 'event' },
     { id: 'usuarios', label: 'Usuarios', icon: 'group' },
     { id: 'noticias', label: 'Noticias', icon: 'newspaper' },
-    { id: 'paginas', label: 'Páginas y Legal', icon: 'article' },
-    { id: 'configuracion', label: 'Configuración', icon: 'settings' },
+    { id: 'paginas', label: 'P├íginas y Legal', icon: 'article' },
+    { id: 'configuracion', label: 'Configuraci├│n', icon: 'settings' },
   ];
 
   return (
@@ -2289,7 +2288,7 @@ function AdminContent() {
           </Link>
           <button onClick={() => signOut(auth)} className="flex items-center gap-3 px-4 py-2 text-error hover:bg-error/10 rounded-lg text-sm transition-colors text-left">
             <span className="material-symbols-outlined text-[20px]">exit_to_app</span>
-            Cerrar Sesión
+            Cerrar Sesi├│n
           </button>
         </div>
       </aside>

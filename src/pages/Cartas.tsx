@@ -62,7 +62,7 @@ export default function Cartas() {
 
   const filteredCards = allCards.filter(card => {
     const matchesTab = activeTab === t.cards.filterAll || card.category === activeTab;
-    const matchesSearch = card.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (card.title || '').toLowerCase().includes(searchQuery.toLowerCase());
     
     const cardTags = card.tags || [];
     const matchesRarity = selectedRarities.length === 0 || selectedRarities.some(r => cardTags.includes(r));

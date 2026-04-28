@@ -30,7 +30,7 @@ export default function Merchandising() {
         const cSnap = await getDocs(collection(db, 'categories'));
         const fetchedCats = cSnap.docs
           .map(doc => ({ id: doc.id, ...doc.data() }))
-          .filter((cat: any) => cat.section === 'merchandising') 
+          .filter((cat: any) => !cat.section || cat.section === 'merchandising') 
           .map((cat: any) => cat.name)
           .filter(name => typeof name === 'string' && name.trim() !== '');
         setDynamicCategories(fetchedCats);
@@ -53,7 +53,7 @@ export default function Merchandising() {
 
   const filteredItems = allItems.filter(item => {
     const matchesTab = activeTab === t.cards.filterAll || item.category === activeTab;
-    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (item.title || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesTab && matchesSearch;
   });
 
