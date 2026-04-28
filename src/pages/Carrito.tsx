@@ -7,6 +7,7 @@ import { useSettingsStore } from '../store/settingsStore';
 import { useAuthStore } from '../store/authStore';
 import { translations } from '../lib/translations';
 import { getLoyaltyByEmail, addPoints, LoyaltyAccount, getLoyaltyConfig, LoyaltyConfig, DEFAULT_LOYALTY_CONFIG } from '../lib/chatbot/loyaltyService';
+import { getSEOImageUrl } from '../lib/seoUtils';
 
 export default function Carrito() {
   const currencySymbol = useSettingsStore(state => state.currencySymbol);
@@ -275,7 +276,7 @@ export default function Carrito() {
                   {items.map((item) => (
                     <div key={item.cartItemId} className="bg-surface-container-lowest p-6 rounded-3xl border border-outline-variant/20 flex flex-col sm:flex-row gap-6 items-center group transition-all hover:shadow-md">
                       <div className="w-32 h-32 rounded-2xl overflow-hidden shrink-0 bg-surface-container flex items-center justify-center p-3 relative">
-                        <img src={item.image_url || `https://picsum.photos/seed/card${item.id}/200/300`} alt={item.title} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" />
+                        <img src={getSEOImageUrl(item.image_url) || `https://picsum.photos/seed/card${item.id}/200/300`} alt={item.title} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" />
                       </div>
                       <div className="flex-grow text-center sm:text-left">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">

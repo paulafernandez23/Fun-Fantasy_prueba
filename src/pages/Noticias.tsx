@@ -4,7 +4,7 @@ import { db } from '../lib/firebase';
 import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { useSettingsStore } from '../store/settingsStore';
 import { translations } from '../lib/translations';
-import { updateMetaTags } from '../lib/seoUtils';
+import { getSEOImageUrl, updateMetaTags } from '../lib/seoUtils';
 
 export default function Noticias() {
   const language = useSettingsStore(state => state.language);
@@ -99,7 +99,7 @@ export default function Noticias() {
             <article key={item.id} className="bg-surface-container-lowest rounded-[2.5rem] overflow-hidden border border-outline-variant/20 group flex flex-col hover:shadow-xl transition-all duration-500">
               <Link to={`/noticia/${item.id}`} className="aspect-video relative overflow-hidden">
                 <img 
-                  src={item.image_url || `https://picsum.photos/seed/news-${item.id}/800/600`} 
+                  src={getSEOImageUrl(item.image_url) || `https://picsum.photos/seed/news-${item.id}/800/600`} 
                   alt={item.title} 
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                 />

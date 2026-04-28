@@ -6,7 +6,7 @@ import { useSettingsStore } from '../store/settingsStore';
 import { translations } from '../lib/translations';
 import ProductCard from '../components/ProductCard';
 import { subscribeToNewsletter } from '../lib/chatbot/newsletterService';
-import { updateMetaTags } from '../lib/seoUtils';
+import { getSEOImageUrl, updateMetaTags } from '../lib/seoUtils';
 
 import newsBanner from '../assets/ff_news_banner.png';
 
@@ -107,7 +107,7 @@ export default function Home() {
       <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-primary-container/20 to-background"></div>
         <img 
-          src={siteContent?.heroImage || "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=2000"} 
+          src={getSEOImageUrl(siteContent?.heroImage) || "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=2000"} 
           alt="Fantasy World" 
           className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-30 scale-105 animate-slow-zoom" 
         />
@@ -187,7 +187,7 @@ export default function Home() {
             </Link>
           </div>
           <div className="relative z-10 w-full max-w-md aspect-video bg-on-primary/10 backdrop-blur-md rounded-3xl border border-on-primary/20 flex items-center justify-center overflow-hidden">
-             <img src={siteContent?.newsBannerImage || newsBanner} alt="News Preview" className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-700" />
+             <img src={getSEOImageUrl(siteContent?.newsBannerImage) || newsBanner} alt="News Preview" className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-700" />
              <div className="absolute inset-0 flex items-center justify-center">
                 <span className="material-symbols-outlined text-on-primary text-6xl opacity-50">play_circle</span>
              </div>

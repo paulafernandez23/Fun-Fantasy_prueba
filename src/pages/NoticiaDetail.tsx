@@ -4,7 +4,7 @@ import { db } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { useSettingsStore } from '../store/settingsStore';
 import { translations } from '../lib/translations';
-import { updateMetaTags } from '../lib/seoUtils';
+import { getSEOImageUrl, updateMetaTags } from '../lib/seoUtils';
 
 export default function NoticiaDetail() {
   const { id } = useParams<{ id: string }>();
@@ -76,7 +76,7 @@ export default function NoticiaDetail() {
       {/* Hero Header */}
       <div className="relative h-[50vh] md:h-[60vh] overflow-hidden">
         <img 
-          src={newsItem.image_url || `https://picsum.photos/seed/news-${id}/1920/1080`} 
+          src={getSEOImageUrl(newsItem.image_url) || `https://picsum.photos/seed/news-${id}/1920/1080`} 
           alt={newsItem.title} 
           className="w-full h-full object-cover" 
         />

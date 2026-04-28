@@ -22,6 +22,7 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState('');
   const [showLightbox, setShowLightbox] = useState(false);
+  const [selectedSize, setSelectedSize] = useState<string>('');
 
   useEffect(() => {
     if (!id) return;
@@ -69,9 +70,19 @@ export default function ProductDetail() {
 
   const handleAddToCart = () => {
     if (product) {
+      const sizesObj = product.sizes || {};
+      const availableSizes = Object.keys(sizesObj).filter(sz => sizesObj[sz] > 0);
+      const currentSize = selectedSize || (availableSizes.length > 0 ? availableSizes[0] : undefined);
+
+      if (availableSizes.length > 0 && !currentSize) {
+        // If there are sizes but none is selected (edge case), do nothing or could show an error
+        return;
+      }
+
       addItem({
         ...product,
-        cartItemId: product.id,
+        cartItemId: currentSize ? `${product.id}-${currentSize}` : product.id,
+        selectedSize: currentSize,
         quantity: quantity
       });
     }
@@ -165,6 +176,38 @@ export default function ProductDetail() {
           <div className="prose prose-sm text-on-surface-variant mb-8 max-w-none">
             <p className="text-lg leading-relaxed">{product.description}</p>
           </div>
+
+          {product.sizes && Object.keys(product.sizes).length > 0 && (
+            <div className="mb-8">
+              <span className="text-sm font-bold text-on-surface-variant uppercase tracking-tighter mb-3 block">Selecciona una talla</span>
+              <div className="flex flex-wrap gap-3">
+                {Object.keys(product.sizes).map((sz) => {
+                  const stock = product.sizes[sz];
+                  const isAvailable = stock > 0;
+                  // If no size is selected yet, default to the first available one in UI
+                  const isSelected = selectedSize === sz || (!selectedSize && isAvailable && Object.keys(product.sizes).filter(s => product.sizes[s] > 0)[0] === sz);
+                  
+                  return (
+                    <button
+                      key={sz}
+                      disabled={!isAvailable}
+                      onClick={() => setSelectedSize(sz)}
+                      className={`min-w-[3rem] h-12 px-4 rounded-xl font-bold transition-all border-2 flex flex-col items-center justify-center ${
+                        isSelected 
+                          ? 'border-primary bg-primary-container text-on-primary-container' 
+                          : isAvailable 
+                            ? 'border-outline-variant hover:border-primary text-on-surface' 
+                            : 'border-outline-variant/30 text-on-surface/30 cursor-not-allowed bg-surface-container-highest/30'
+                      }`}
+                    >
+                      <span>{sz}</span>
+                      {!isAvailable && <span className="text-[9px] font-normal uppercase tracking-widest mt-0.5">Agotado</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Action Area */}
           <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/20 mb-8">
