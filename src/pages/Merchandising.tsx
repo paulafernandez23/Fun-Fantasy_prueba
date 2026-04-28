@@ -27,10 +27,11 @@ export default function Merchandising() {
         setAllItems(pSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 
         // Fetch categories for this section
-        const cq = query(collection(db, 'categories'), where('section', '==', 'merchandising'));
-        const cSnap = await getDocs(cq);
+        const cSnap = await getDocs(collection(db, 'categories'));
         const fetchedCats = cSnap.docs
-          .map(doc => doc.data().name)
+          .map(doc => doc.data())
+          .filter(cat => cat.section === 'merchandising') // Merchandising must be explicit
+          .map(cat => cat.name)
           .filter(name => typeof name === 'string' && name.trim() !== '');
         setDynamicCategories(fetchedCats);
       } catch (error) {

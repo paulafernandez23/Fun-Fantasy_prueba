@@ -76,7 +76,7 @@ function AdminContent() {
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any | null>(null);
   const [showAddCategory, setShowAddCategory] = useState(false);
-  const [newCategory, setNewCategory] = useState({ name: '', subcategories: '' }); // subcategories as comma separated string
+  const [newCategory, setNewCategory] = useState({ name: '', subcategories: '', section: 'merchandising' }); // section added
   
   // Custom Confirm/Alert Modal State
   const [modal, setModal] = useState<{ show: boolean; title: string; message: string; onConfirm?: () => void; type: 'confirm' | 'alert' }>({
@@ -183,41 +183,46 @@ function AdminContent() {
           snap.docs.forEach(d => { fetched[d.id] = d.data(); });
           setSiteContent(fetched);
           
-          // Use translations as the absolute fallback
           const t = translations[config.language];
           
+          // Initial content with proper fallbacks
           const homeMerged = { 
-            heroTitle: t.home.heroTitle,
-            heroSubtitle: t.home.heroSubtitle,
-            newsTitle: "¿Buscas las últimas noticias?",
-            newsDescription: "Entérate de los nuevos lanzamientos de TCG y eventos de la comunidad.",
-            newsButtonText: "Ir a Noticias",
-            newsButtonUrl: "/noticias",
-            ...(fetched['home'] || {}) 
+            heroTitle: fetched['home']?.heroTitle ?? t.home.heroTitle,
+            heroSubtitle: fetched['home']?.heroSubtitle ?? t.home.heroSubtitle,
+            heroImage: fetched['home']?.heroImage ?? '',
+            newsTitle: fetched['home']?.newsTitle ?? "¿Buscas las últimas noticias?",
+            newsDescription: fetched['home']?.newsDescription ?? "Entérate de los nuevos lanzamientos de TCG y eventos de la comunidad.",
+            newsButtonText: fetched['home']?.newsButtonText ?? "Ir a Noticias",
+            newsButtonUrl: fetched['home']?.newsButtonUrl ?? "/noticias",
+            newsBannerImage: fetched['home']?.newsBannerImage ?? ''
           };
           
           const contactoMerged = { 
-            title: t.contact.title,
-            email: "soporte@esfantasia.es",
-            phone: "+34 602 413 055",
-            location: "Murcia, España",
-            ...(fetched['contacto'] || {}) 
+            title: fetched['contacto']?.title ?? t.contact.title,
+            email: fetched['contacto']?.email ?? "soporte@esfantasia.es",
+            phone: fetched['contacto']?.phone ?? "+34 602 413 055",
+            location: fetched['contacto']?.location ?? "Murcia, España",
+            address: fetched['contacto']?.address ?? '',
+            schedule: fetched['contacto']?.schedule ?? ''
           };
           
-          setLocalCMS({ ...fetched, home: homeMerged, contacto: contactoMerged });
+          setLocalCMS({ 
+            ...fetched, 
+            home: homeMerged, 
+            contacto: contactoMerged 
+          });
         })
         .catch(err => {
           console.error("Error loading site content:", err);
-          // Even on error, set locals with fallbacks
           const t = translations[config.language];
           setLocalCMS({
-            home: { heroTitle: t.home.heroTitle, heroSubtitle: t.home.heroSubtitle },
-            contacto: { title: t.contact.title }
+            home: { heroTitle: t.home.heroTitle, heroSubtitle: t.home.heroSubtitle, heroImage: '' },
+            contacto: { title: t.contact.title, email: '', phone: '', location: '' }
           });
         })
         .finally(() => setContentLoading(false));
     }
-  }, [activeTab]);
+  }, [activeTab, config.language]);
 
   // Cálculos derivados de los datos reales
   const totalSales = allOrders.reduce((sum, order) => sum + (Number(order.total) || 0), 0);
@@ -534,7 +539,7 @@ function AdminContent() {
       
       setShowAddCategory(false);
       setEditingCategory(null);
-      setNewCategory({ name: '', subcategories: '' });
+      setNewCategory({ name: '', subcategories: '', section: 'merchandising' });
       showAlert('Éxito', 'Categoría guardada correctamente.');
     } catch (error) {
       console.error(error);
@@ -544,49 +549,9 @@ function AdminContent() {
     }
   };
 
-  // Initialize localCMS when siteContent or translations change
-  useEffect(() => {
-    if (siteContent && Object.keys(siteContent).length > 0) {
-      setLocalCMS({
-        home: {
-          heroTitle: siteContent.home?.heroTitle || t.home.heroTitle,
-          heroSubtitle: siteContent.home?.heroSubtitle || t.home.heroSubtitle,
-          heroImage: siteContent.home?.heroImage || '',
-          newsTitle: siteContent.home?.newsTitle || '',
-          newsDescription: siteContent.home?.newsDescription || '',
-          newsButtonText: siteContent.home?.newsButtonText || '',
-          newsButtonUrl: siteContent.home?.newsButtonUrl || '',
-        },
-        contacto: {
-          title: siteContent.contacto?.title || t.contact.title,
-          email: siteContent.contacto?.email || t.contact.email,
-          phone: siteContent.contacto?.phone || '',
-          address: siteContent.contacto?.address || '',
-          schedule: siteContent.contacto?.schedule || '',
-        }
-      });
-    } else if (!siteContent) {
-      // Fallback to translations if no firestore data yet
-      setLocalCMS({
-        home: {
-          heroTitle: t.home.heroTitle,
-          heroSubtitle: t.home.heroSubtitle,
-          heroImage: '',
-          newsTitle: '',
-          newsDescription: '',
-          newsButtonText: '',
-          newsButtonUrl: '',
-        },
-        contacto: {
-          title: t.contact.title,
-          email: t.contact.email,
-          phone: '',
-          address: '',
-          schedule: '',
-        }
-      });
-    }
-  }, [siteContent, language]); // Re-run if siteContent or language changes
+  // CMS state is now managed in the main loadData and activeTab effect above
+  // to prevent redundant state overrides.
+  const t = translations[config.language];
 
   const handleBulkUpload = async (file: File) => {
     setIsSaving(true);
@@ -1048,7 +1013,7 @@ function AdminContent() {
                         className="w-full px-3 py-2.5 rounded-xl bg-surface-container border border-outline-variant/30 text-sm font-bold"
                       >
                         <option value="">Seleccionar Categoría</option>
-                        {allCategories.filter(cat => cat.section === newProduct.type).map(cat => (
+                        {allCategories.filter(cat => !cat.section || cat.section === newProduct.type).map(cat => (
                           <option key={cat.id} value={cat.name}>{cat.name}</option>
                         ))}
                       </select>
@@ -1782,7 +1747,11 @@ function AdminContent() {
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Gestión de Categorías</h2>
               <button 
-                onClick={() => { setShowAddCategory(true); setEditingCategory(null); setNewCategory({ name: '', subcategories: '' }); }}
+                onClick={() => { 
+                  setShowAddCategory(true); 
+                  setEditingCategory(null); 
+                  setNewCategory({ name: '', subcategories: '', section: 'merchandising' }); 
+                }}
                 className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-colors shadow-lg"
               >
                 <span className="material-symbols-outlined">add</span>
@@ -2144,35 +2113,55 @@ function AdminContent() {
                       <input type="file" className="hidden" accept="image/*" onChange={e => e.target.files && handleCMSImageUpload('home', 'heroImage', e.target.files[0])} />
                     </label>
                   </div>
-                  <div className="relative w-full rounded-2xl overflow-hidden border border-outline-variant/30" style={{ aspectRatio: '16/7', background: '#1a1a2e' }}>
-                    <div className="absolute inset-0 bg-gradient-to-b from-primary/20 to-background z-10 pointer-events-none"></div>
+                  <div className="relative w-full rounded-3xl overflow-hidden border-4 border-outline-variant/30 shadow-2xl" style={{ aspectRatio: '16/8', background: '#0a0a0f' }}>
+                    {/* Simulación del Hero Real */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-primary/10 to-[#0a0a0f] z-10"></div>
                     {homeData.heroImage ? (
-                      <>
-                        <img src={homeData.heroImage} alt="Preview Hero" className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-30 scale-105" />
-                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center p-4">
-                          <h4 className="text-white font-headline text-xl font-black mb-2 drop-shadow-lg px-6">{homeData.heroTitle || t.home.heroTitle}</h4>
-                          <p className="text-white/80 text-xs font-medium drop-shadow-md px-10 line-clamp-2 max-w-md">{homeData.heroSubtitle || t.home.heroSubtitle}</p>
-                        </div>
-                      </>
+                      <img src={homeData.heroImage} alt="Preview Hero" className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-40 scale-105" />
                     ) : (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center text-white/20 bg-gradient-to-br from-surface-container to-surface-container-high">
-                        <span className="material-symbols-outlined text-4xl">image</span>
-                        <span className="text-xs font-bold mt-2">Sin imagen — sube una para ver la vista previa</span>
+                      <div className="absolute inset-0 flex items-center justify-center text-white/5 bg-surface-container">
+                        <span className="material-symbols-outlined text-8xl">image</span>
                       </div>
                     )}
-                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center px-4 gap-1.5">
-                      <p className="font-black text-on-background text-center text-sm leading-tight drop-shadow-lg max-w-xs line-clamp-2">
-                        {homeData.heroTitle || 'Fun Fantasy'}
+                    
+                    {/* Contenido exactamente igual a Home.tsx */}
+                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center p-6">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/20 text-primary rounded-full text-[8px] font-black uppercase tracking-tighter mb-4 backdrop-blur-md border border-primary/30">
+                        <span className="material-symbols-outlined text-[10px]">stars</span>
+                        {t.home.featured}
+                      </div>
+                      <h1 className="font-headline text-2xl md:text-4xl font-black text-white mb-4 tracking-tight leading-[1.1] drop-shadow-2xl max-w-lg">
+                        {homeData.heroTitle || t.home.heroTitle}
+                      </h1>
+                      <p className="text-[10px] md:text-sm text-white/70 mb-8 max-w-md font-medium drop-shadow-lg line-clamp-2">
+                        {homeData.heroSubtitle || t.home.heroSubtitle}
                       </p>
-                      <p className="text-on-surface-variant text-[9px] text-center max-w-[75%] line-clamp-1">
-                        {homeData.heroSubtitle || 'Tu tienda de confianza de Final Fantasy'}
-                      </p>
-                      <div className="flex items-center gap-1.5 bg-surface-container-lowest/90 backdrop-blur-sm rounded-xl px-3 py-1.5 border border-outline-variant/30 w-full max-w-[200px] mt-0.5">
-                        <span className="material-symbols-outlined text-on-surface-variant text-[14px]">search</span>
-                        <span className="text-on-surface-variant/50 text-[9px]">Buscar cartas...</span>
+                      
+                      {/* Barra de búsqueda simulada */}
+                      <div className="w-full max-w-sm relative group">
+                        <div className="w-full h-10 bg-white border border-outline-variant/30 rounded-xl flex items-center px-4 shadow-xl">
+                          <span className="material-symbols-outlined text-on-surface-variant text-lg">search</span>
+                          <span className="ml-3 text-on-surface-variant/40 text-[10px] font-medium">{t.cards.searchPlaceholder}</span>
+                        </div>
                       </div>
                     </div>
-                    <div className="absolute top-2 left-2 z-30 bg-black/60 px-2 py-0.5 rounded-full text-[8px] font-black text-white uppercase tracking-widest">Vista Previa Real</div>
+                    
+                    <div className="absolute top-4 right-4 z-30 bg-primary px-3 py-1 rounded-full text-[8px] font-black text-on-primary uppercase tracking-widest shadow-lg">Vista Previa Exacta</div>
+                  </div>
+
+                  <div className="flex justify-end mt-4">
+                    <button 
+                      onClick={() => handleSaveContent('home')}
+                      disabled={isSaving}
+                      className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all shadow-lg disabled:opacity-50"
+                    >
+                      {isSaving ? (
+                        <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+                      ) : (
+                        <span className="material-symbols-outlined text-sm">save</span>
+                      )}
+                      Guardar Cambios Multimedia
+                    </button>
                   </div>
                 </div>
                 {/* News Banner Image */}
