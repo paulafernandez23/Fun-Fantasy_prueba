@@ -176,10 +176,13 @@ function AdminContent() {
       setContentLoading(true);
       getDocs(collection(db, 'site_content'))
         .then(snap => {
-          const content: Record<string, any> = {};
-          snap.docs.forEach(doc => { content[doc.id] = doc.data(); });
-          setSiteContent(content);
-          setLocalCMS(content);
+          const fetched: Record<string, any> = {};
+          snap.docs.forEach(d => { fetched[d.id] = d.data(); });
+          setSiteContent(fetched);
+          // Pre-populate with fallbacks so admin always sees actual site text
+          const homeMerged = { ...{"heroTitle":"Fun Fantasy","heroSubtitle":"Tu tienda de confianza de Final Fantasy","newsTitle":"¿Buscas las últimas noticias?","newsDescription":"Entérate de los nuevos lanzamientos de TCG y eventos de la comunidad.","newsButtonText":"Ir a Noticias","newsButtonUrl":"/noticias"}, ...(fetched['home'] || {}) };
+          const contactoMerged = { ...{"title":"Contacto","email":"soporte@esfantasia.es","phone":"+34 602 413 055","location":"Murcia, España"}, ...(fetched['contacto'] || {}) };
+          setLocalCMS({ ...fetched, home: homeMerged, contacto: contactoMerged });
         })
         .finally(() => setContentLoading(false));
     }
@@ -1795,7 +1798,7 @@ function AdminContent() {
           return (
             <div className="flex flex-col items-center justify-center py-20 text-on-surface-variant">
               <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-              <p className="font-bold">Cargando contenido...</p>
+              <p className="font-bold">Cargando contenido de tu web...</p>
             </div>
           );
         }
@@ -1809,20 +1812,24 @@ function AdminContent() {
 
         return (
           <div className="space-y-6">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-3xl font-black text-on-surface flex items-center gap-3">
-                  <span className="material-symbols-outlined text-primary text-4xl">web</span>
-                  Personalización Web (CMS)
-                </h2>
-                <p className="text-on-surface-variant mt-1">Gestiona los textos e imágenes de las secciones públicas de tu tienda.</p>
-              </div>
+            <div className="mb-8">
+              <h2 className="text-3xl font-black text-on-surface flex items-center gap-3">
+                <span className="material-symbols-outlined text-primary text-4xl">web</span>
+                Personalización Web
+              </h2>
+              <p className="text-on-surface-variant mt-1">Cambia los textos e imágenes que aparecen en tu tienda. Los cambios se guardan al pulsar <strong>Guardar</strong>.</p>
+            </div>
+
+            {/* Aviso informativo */}
+            <div className="flex items-start gap-4 p-5 bg-primary/5 border border-primary/20 rounded-2xl">
+              <span className="material-symbols-outlined text-primary mt-0.5 shrink-0">tips_and_updates</span>
+              <p className="text-sm text-on-surface-variant"><strong className="text-on-surface">Cómo funciona:</strong> Lo que ves en los campos es exactamente lo que aparece ahora en tu web. Modifica el texto que quieras y pulsa el botón Guardar de esa sección. Los cambios se reflejan en la tienda al instante.</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* ===== Home Page CMS ===== */}
-              <div className="bg-surface-container-lowest rounded-[2.5rem] border border-outline-variant/30 shadow-sm overflow-hidden flex flex-col group hover:border-primary/30 transition-all">
-                <div className="p-8 border-b border-outline-variant/20 bg-surface-container/30 flex items-center justify-between">
+              <div className="bg-surface-container-lowest rounded-[2.5rem] border border-outline-variant/30 shadow-sm overflow-hidden flex flex-col">
+                <div className="p-6 border-b border-outline-variant/20 bg-surface-container/30 flex items-center justify-between">
                   <h3 className="font-black flex items-center gap-3 text-lg">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                       <span className="material-symbols-outlined">home</span>
@@ -1832,88 +1839,69 @@ function AdminContent() {
                   <button
                     onClick={() => handleSaveContent('home')}
                     disabled={isSaving}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 disabled:opacity-60"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 disabled:opacity-60"
                   >
-                    {isSaving
-                      ? <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
-                      : <span className="material-symbols-outlined text-[18px]">save</span>
-                    }
-                    Guardar Inicio
+                    {isSaving ? <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span> : <span className="material-symbols-outlined text-[18px]">save</span>}
+                    Guardar
                   </button>
                 </div>
-                <div className="p-8 space-y-6 flex-grow">
-                  <div className="grid grid-cols-1 gap-6">
-                    <div className="space-y-2">
-                      <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Título Hero (Cabecera)</label>
+                <div className="p-6 space-y-5 flex-grow">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-black uppercase tracking-widest text-primary ml-1">Título principal</label>
+                    <p className="text-[10px] text-on-surface-variant ml-1 mb-1">El texto grande que aparece en la portada de la web.</p>
+                    <input
+                      type="text"
+                      value={homeData.heroTitle ?? ''}
+                      onChange={e => updateLocalField('home', 'heroTitle', e.target.value)}
+                      className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm font-medium"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-black uppercase tracking-widest text-primary ml-1">Subtítulo</label>
+                    <p className="text-[10px] text-on-surface-variant ml-1 mb-1">El texto más pequeño que aparece debajo del título.</p>
+                    <textarea
+                      value={homeData.heroSubtitle ?? ''}
+                      onChange={e => updateLocalField('home', 'heroSubtitle', e.target.value)}
+                      className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm font-medium h-20 resize-none"
+                    ></textarea>
+                  </div>
+                  <div className="border-t border-outline-variant/20 pt-4 space-y-4">
+                    <p className="text-xs font-black uppercase tracking-widest text-primary">Banner de noticias</p>
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Título del banner</label>
                       <input
                         type="text"
-                        placeholder="Ej: Bienvenido a Fun Fantasy"
-                        value={homeData.heroTitle ?? ''}
-                        onChange={e => updateLocalField('home', 'heroTitle', e.target.value)}
-                        className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium"
+                        value={homeData.newsTitle ?? ''}
+                        onChange={e => updateLocalField('home', 'newsTitle', e.target.value)}
+                        className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none focus:border-primary transition-all text-sm font-medium"
                       />
-                      <p className="text-[10px] text-on-surface-variant ml-1">El texto principal que aparece nada más entrar en la web.</p>
                     </div>
-                    <div className="space-y-2">
-                      <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Subtítulo Hero</label>
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Descripción del banner</label>
                       <textarea
-                        placeholder="Ej: Tu tienda de confianza de Final Fantasy..."
-                        value={homeData.heroSubtitle ?? ''}
-                        onChange={e => updateLocalField('home', 'heroSubtitle', e.target.value)}
-                        className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium h-24 resize-none"
+                        value={homeData.newsDescription ?? ''}
+                        onChange={e => updateLocalField('home', 'newsDescription', e.target.value)}
+                        className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none focus:border-primary transition-all text-sm font-medium h-16 resize-none"
                       ></textarea>
                     </div>
-                    <div className="bg-surface-container/50 p-6 rounded-3xl border border-outline-variant/20 space-y-4">
-                      <h4 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[16px]">ads_click</span>
-                        Sección de Noticias (Botón)
-                      </h4>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Texto del Botón</label>
-                          <input
-                            type="text"
-                            placeholder="Ej: Ver Todas"
-                            value={homeData.newsButtonText ?? ''}
-                            onChange={e => updateLocalField('home', 'newsButtonText', e.target.value)}
-                            className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Enlace (URL)</label>
-                          <input
-                            type="text"
-                            placeholder="Ej: /noticias"
-                            value={homeData.newsButtonUrl ?? ''}
-                            onChange={e => updateLocalField('home', 'newsButtonUrl', e.target.value)}
-                            className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="space-y-4">
-                      <h4 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[16px]">newspaper</span>
-                        Textos Sección Noticias
-                      </h4>
-                      <div className="space-y-2">
-                        <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Título Noticias</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Texto del botón</label>
                         <input
                           type="text"
-                          placeholder="Ej: ¿Buscas las últimas noticias?"
-                          value={homeData.newsTitle ?? ''}
-                          onChange={e => updateLocalField('home', 'newsTitle', e.target.value)}
-                          className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium"
+                          value={homeData.newsButtonText ?? ''}
+                          onChange={e => updateLocalField('home', 'newsButtonText', e.target.value)}
+                          className="w-full bg-surface-container px-3 py-2 rounded-xl border border-outline-variant/30 outline-none focus:border-primary transition-all text-sm font-medium"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Descripción Noticias</label>
-                        <textarea
-                          placeholder="Ej: Entérate de los nuevos lanzamientos..."
-                          value={homeData.newsDescription ?? ''}
-                          onChange={e => updateLocalField('home', 'newsDescription', e.target.value)}
-                          className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium h-20 resize-none"
-                        ></textarea>
+                      <div className="space-y-1.5">
+                        <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Enlace URL</label>
+                        <input
+                          type="text"
+                          value={homeData.newsButtonUrl ?? ''}
+                          onChange={e => updateLocalField('home', 'newsButtonUrl', e.target.value)}
+                          className="w-full bg-surface-container px-3 py-2 rounded-xl border border-outline-variant/30 outline-none focus:border-primary transition-all text-sm font-medium"
+                        />
                       </div>
                     </div>
                   </div>
@@ -1921,8 +1909,8 @@ function AdminContent() {
               </div>
 
               {/* ===== Contact Page CMS ===== */}
-              <div className="bg-surface-container-lowest rounded-[2.5rem] border border-outline-variant/30 shadow-sm overflow-hidden flex flex-col group hover:border-primary/30 transition-all">
-                <div className="p-8 border-b border-outline-variant/20 bg-surface-container/30 flex items-center justify-between">
+              <div className="bg-surface-container-lowest rounded-[2.5rem] border border-outline-variant/30 shadow-sm overflow-hidden flex flex-col">
+                <div className="p-6 border-b border-outline-variant/20 bg-surface-container/30 flex items-center justify-between">
                   <h3 className="font-black flex items-center gap-3 text-lg">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                       <span className="material-symbols-outlined">contact_support</span>
@@ -1932,68 +1920,60 @@ function AdminContent() {
                   <button
                     onClick={() => handleSaveContent('contacto')}
                     disabled={isSaving}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 disabled:opacity-60"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 disabled:opacity-60"
                   >
-                    {isSaving
-                      ? <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
-                      : <span className="material-symbols-outlined text-[18px]">save</span>
-                    }
-                    Guardar Contacto
+                    {isSaving ? <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span> : <span className="material-symbols-outlined text-[18px]">save</span>}
+                    Guardar
                   </button>
                 </div>
-                <div className="p-8 space-y-6 flex-grow">
-                  <div className="grid grid-cols-1 gap-6">
-                    <div className="space-y-2">
-                      <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Título de la Página</label>
-                      <input
-                        type="text"
-                        placeholder="Ej: Contacto"
-                        value={contactData.title ?? ''}
-                        onChange={e => updateLocalField('contacto', 'title', e.target.value)}
-                        className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium"
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Email Público</label>
-                        <input
-                          type="email"
-                          placeholder="soporte@esfantasia.es"
-                          value={contactData.email ?? ''}
-                          onChange={e => updateLocalField('contacto', 'email', e.target.value)}
-                          className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Teléfono</label>
-                        <input
-                          type="text"
-                          placeholder="+34 600 000 000"
-                          value={contactData.phone ?? ''}
-                          onChange={e => updateLocalField('contacto', 'phone', e.target.value)}
-                          className="w-full bg-surface-container px-4 py-2.5 rounded-xl border border-outline-variant/30 outline-none text-sm font-medium"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant ml-1">Ubicación / Dirección</label>
-                      <input
-                        type="text"
-                        placeholder="Ej: Murcia, España"
-                        value={contactData.location ?? ''}
-                        onChange={e => updateLocalField('contacto', 'location', e.target.value)}
-                        className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-medium"
-                      />
-                      <p className="text-[10px] text-on-surface-variant ml-1">Esta dirección se usará para generar el mapa de Google en la página de contacto.</p>
-                    </div>
+                <div className="p-6 space-y-5 flex-grow">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-black uppercase tracking-widest text-primary ml-1">Título de la página</label>
+                    <p className="text-[10px] text-on-surface-variant ml-1 mb-1">El título grande que ven los visitantes al entrar en Contacto.</p>
+                    <input
+                      type="text"
+                      value={contactData.title ?? ''}
+                      onChange={e => updateLocalField('contacto', 'title', e.target.value)}
+                      className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm font-medium"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-black uppercase tracking-widest text-primary ml-1">Email de contacto</label>
+                    <p className="text-[10px] text-on-surface-variant ml-1 mb-1">El email que se muestra públicamente para que los clientes te escriban.</p>
+                    <input
+                      type="email"
+                      value={contactData.email ?? ''}
+                      onChange={e => updateLocalField('contacto', 'email', e.target.value)}
+                      className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm font-medium"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-black uppercase tracking-widest text-primary ml-1">Teléfono</label>
+                    <p className="text-[10px] text-on-surface-variant ml-1 mb-1">El teléfono visible en la página de contacto.</p>
+                    <input
+                      type="text"
+                      value={contactData.phone ?? ''}
+                      onChange={e => updateLocalField('contacto', 'phone', e.target.value)}
+                      className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm font-medium"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-black uppercase tracking-widest text-primary ml-1">Ubicación / Dirección</label>
+                    <p className="text-[10px] text-on-surface-variant ml-1 mb-1">La dirección que aparece en el mapa de la página de contacto.</p>
+                    <input
+                      type="text"
+                      value={contactData.location ?? ''}
+                      onChange={e => updateLocalField('contacto', 'location', e.target.value)}
+                      className="w-full bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/30 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm font-medium"
+                    />
                   </div>
                 </div>
               </div>
             </div>
 
             {/* ===== Media Management ===== */}
-            <div className="bg-surface-container-lowest rounded-[2.5rem] border border-outline-variant/30 shadow-sm overflow-hidden group hover:border-primary/30 transition-all">
-              <div className="p-8 border-b border-outline-variant/20 bg-surface-container/30 flex items-center justify-between">
+            <div className="bg-surface-container-lowest rounded-[2.5rem] border border-outline-variant/30 shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-outline-variant/20 bg-surface-container/30 flex items-center justify-between">
                 <h3 className="font-black flex items-center gap-3 text-lg">
                   <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                     <span className="material-symbols-outlined">image</span>
@@ -2003,124 +1983,77 @@ function AdminContent() {
                 <button
                   onClick={() => handleSaveContent('home')}
                   disabled={isSaving}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 disabled:opacity-60"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 disabled:opacity-60"
                 >
-                  {isSaving
-                    ? <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
-                    : <span className="material-symbols-outlined text-[18px]">save</span>
-                  }
-                  Guardar Imágenes
+                  {isSaving ? <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span> : <span className="material-symbols-outlined text-[18px]">save</span>}
+                  Guardar
                 </button>
               </div>
-              <div className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-                {/* Hero Image + contextual preview */}
-                <div className="space-y-4">
+              <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Hero Image */}
+                <div className="space-y-3">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <h4 className="font-black text-xs uppercase tracking-widest text-on-surface-variant">Imagen Hero (Inicio)</h4>
-                      <p className="text-[10px] text-on-surface-variant mt-1">Imagen de fondo principal de la home. Se muestra con <strong>30% opacidad</strong> y <strong>mix-blend-overlay</strong> sobre el gradiente. La vista previa refleja exactamente cómo se verá.</p>
+                      <h4 className="font-black text-xs uppercase tracking-widest text-primary">Imagen de portada (Hero)</h4>
+                      <p className="text-[10px] text-on-surface-variant mt-1">La imagen de fondo que aparece al entrar en la web. Se muestra con efecto de transparencia sobre el fondo oscuro.</p>
                     </div>
                     <label className="cursor-pointer shrink-0 px-4 py-2 bg-primary/10 text-primary rounded-xl font-bold text-xs hover:bg-primary/20 transition-all flex items-center gap-2">
                       <span className="material-symbols-outlined text-[16px]">upload</span>
-                      Subir Nueva
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept="image/*"
-                        onChange={e => e.target.files && handleCMSImageUpload('home', 'heroImage', e.target.files[0])}
-                      />
+                      Subir imagen
+                      <input type="file" className="hidden" accept="image/*" onChange={e => e.target.files && handleCMSImageUpload('home', 'heroImage', e.target.files[0])} />
                     </label>
                   </div>
-                  {/* Contextual Hero preview matching Home.tsx exactly */}
-                  <div
-                    className="relative w-full rounded-2xl overflow-hidden border border-outline-variant/30"
-                    style={{ aspectRatio: '16/7', background: '#1a1a2e' }}
-                  >
-                    {/* Same gradient as Home hero section */}
+                  <div className="relative w-full rounded-2xl overflow-hidden border border-outline-variant/30" style={{ aspectRatio: '16/7', background: '#1a1a2e' }}>
                     <div className="absolute inset-0 bg-gradient-to-b from-primary/20 to-background z-10 pointer-events-none"></div>
-                    {/* Hero image with same styles as Home.tsx */}
                     {homeData.heroImage ? (
-                      <img
-                        src={homeData.heroImage}
-                        alt="Preview Hero"
-                        className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-30 scale-105"
-                      />
+                      <img src={homeData.heroImage} alt="Preview Hero" className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-30 scale-105" />
                     ) : (
                       <div className="absolute inset-0 flex flex-col items-center justify-center text-white/20 bg-gradient-to-br from-surface-container to-surface-container-high">
-                        <span className="material-symbols-outlined text-5xl">image</span>
+                        <span className="material-symbols-outlined text-4xl">image</span>
                         <span className="text-xs font-bold mt-2">Sin imagen — sube una para ver la vista previa</span>
                       </div>
                     )}
-                    {/* Content overlay matching Home.tsx layout */}
                     <div className="absolute inset-0 z-20 flex flex-col items-center justify-center px-4 gap-1.5">
-                      <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/10 text-primary/80 rounded-full text-[8px] font-bold border border-primary/20 backdrop-blur-sm">
-                        <span className="material-symbols-outlined" style={{fontSize: '8px'}}>stars</span>
-                        PRODUCTOS DESTACADOS
-                      </div>
-                      <p className="font-black text-on-background text-center text-sm leading-tight tracking-tight drop-shadow-lg max-w-xs line-clamp-2">
-                        {homeData.heroTitle || 'Bienvenido a Fun Fantasy'}
+                      <p className="font-black text-on-background text-center text-sm leading-tight drop-shadow-lg max-w-xs line-clamp-2">
+                        {homeData.heroTitle || 'Fun Fantasy'}
                       </p>
                       <p className="text-on-surface-variant text-[9px] text-center max-w-[75%] line-clamp-1">
                         {homeData.heroSubtitle || 'Tu tienda de confianza de Final Fantasy'}
                       </p>
-                      {/* Mini search bar */}
-                      <div className="flex items-center gap-1.5 bg-surface-container-lowest/90 backdrop-blur-sm rounded-xl px-3 py-1.5 border-2 border-outline-variant/30 w-full max-w-[220px] mt-0.5 shadow-xl">
+                      <div className="flex items-center gap-1.5 bg-surface-container-lowest/90 backdrop-blur-sm rounded-xl px-3 py-1.5 border border-outline-variant/30 w-full max-w-[200px] mt-0.5">
                         <span className="material-symbols-outlined text-on-surface-variant text-[14px]">search</span>
-                        <span className="text-on-surface-variant/50 text-[9px] font-medium flex-1">Buscar cartas...</span>
-                        <div className="px-2 py-0.5 bg-primary text-on-primary rounded text-[7px] font-bold">Buscar</div>
+                        <span className="text-on-surface-variant/50 text-[9px]">Buscar cartas...</span>
                       </div>
                     </div>
-                    <div className="absolute top-2 left-2 z-30 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full text-[8px] font-black text-white uppercase tracking-widest border border-white/20">
-                      Vista Previa Real
-                    </div>
+                    <div className="absolute top-2 left-2 z-30 bg-black/60 px-2 py-0.5 rounded-full text-[8px] font-black text-white uppercase tracking-widest">Vista Previa Real</div>
                   </div>
                 </div>
-
-                {/* News Banner Image + contextual preview */}
-                <div className="space-y-4">
+                {/* News Banner Image */}
+                <div className="space-y-3">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <h4 className="font-black text-xs uppercase tracking-widest text-on-surface-variant">Banner de Noticias</h4>
-                      <p className="text-[10px] text-on-surface-variant mt-1">Imagen del banner de noticias. Aparece con <strong>60% opacidad</strong> sobre fondo de color primario con efecto de zoom al pasar el ratón.</p>
+                      <h4 className="font-black text-xs uppercase tracking-widest text-primary">Imagen del banner de noticias</h4>
+                      <p className="text-[10px] text-on-surface-variant mt-1">La imagen que aparece en el bloque de noticias de la página de inicio.</p>
                     </div>
                     <label className="cursor-pointer shrink-0 px-4 py-2 bg-primary/10 text-primary rounded-xl font-bold text-xs hover:bg-primary/20 transition-all flex items-center gap-2">
                       <span className="material-symbols-outlined text-[16px]">upload</span>
-                      Subir Nueva
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept="image/*"
-                        onChange={e => e.target.files && handleCMSImageUpload('home', 'newsBannerImage', e.target.files[0])}
-                      />
+                      Subir imagen
+                      <input type="file" className="hidden" accept="image/*" onChange={e => e.target.files && handleCMSImageUpload('home', 'newsBannerImage', e.target.files[0])} />
                     </label>
                   </div>
-                  {/* Contextual News banner preview */}
-                  <div
-                    className="relative w-full rounded-2xl overflow-hidden border border-outline-variant/30 bg-primary"
-                    style={{ aspectRatio: '16/7' }}
-                  >
-                    <div className="absolute inset-0 opacity-10 z-0" style={{backgroundImage: "url('https://www.transparenttextures.com/patterns/carbon-fibre.png')"}}></div>
+                  <div className="relative w-full rounded-2xl overflow-hidden border border-outline-variant/30 bg-primary" style={{ aspectRatio: '16/7' }}>
                     <div className="absolute inset-0 z-10 flex items-center px-6 gap-4">
                       <div className="flex-1 min-w-0">
-                        <p className="font-black text-on-primary text-xs leading-tight line-clamp-2">
-                          {homeData.newsTitle || '¿Buscas las últimas noticias?'}
-                        </p>
-                        <p className="text-on-primary/70 text-[8px] mt-1 line-clamp-2">
-                          {homeData.newsDescription || 'Entérate de los nuevos lanzamientos de TCG y eventos de la comunidad.'}
-                        </p>
-                        <div className="inline-flex items-center gap-1 mt-2 px-2.5 py-1 bg-on-primary text-primary rounded-xl text-[8px] font-bold">
-                          {homeData.newsButtonText || 'Ir a Noticias'}
-                          <span className="material-symbols-outlined" style={{fontSize: '8px'}}>newspaper</span>
-                        </div>
+                        <p className="font-black text-on-primary text-xs leading-tight line-clamp-2">{homeData.newsTitle || '¿Buscas las últimas noticias?'}</p>
+                        <p className="text-on-primary/70 text-[8px] mt-1 line-clamp-2">{homeData.newsDescription || 'Entérate de los nuevos lanzamientos...'}</p>
+                        <div className="inline-flex items-center gap-1 mt-2 px-2.5 py-1 bg-on-primary text-primary rounded-xl text-[8px] font-bold">{homeData.newsButtonText || 'Ir a Noticias'}</div>
                       </div>
-                      <div className="relative shrink-0 rounded-2xl overflow-hidden bg-on-primary/10 backdrop-blur-md border border-on-primary/20 flex items-center justify-center" style={{width: '45%', aspectRatio: '16/10'}}>
+                      <div className="relative shrink-0 rounded-2xl overflow-hidden bg-on-primary/10 border border-on-primary/20 flex items-center justify-center" style={{width: '45%', aspectRatio: '16/10'}}>
                         {homeData.newsBannerImage ? (
                           <img src={homeData.newsBannerImage} alt="Preview Banner" className="w-full h-full object-cover opacity-60" />
                         ) : (
                           <div className="flex flex-col items-center justify-center text-white/20 w-full h-full">
                             <span className="material-symbols-outlined text-2xl">image</span>
-                            <span className="text-[8px] font-bold mt-1">Sin imagen</span>
                           </div>
                         )}
                         <div className="absolute inset-0 flex items-center justify-center">
@@ -2128,21 +2061,9 @@ function AdminContent() {
                         </div>
                       </div>
                     </div>
-                    <div className="absolute top-2 left-2 z-30 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full text-[8px] font-black text-white uppercase tracking-widest border border-white/20">
-                      Vista Previa Real
-                    </div>
+                    <div className="absolute top-2 left-2 z-30 bg-black/60 px-2 py-0.5 rounded-full text-[8px] font-black text-white uppercase tracking-widest">Vista Previa Real</div>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            <div className="p-8 bg-primary/5 border border-primary/20 rounded-[2.5rem] flex items-center gap-6">
-              <div className="w-14 h-14 rounded-2xl bg-primary/20 text-primary flex items-center justify-center shrink-0">
-                <span className="material-symbols-outlined text-3xl">info</span>
-              </div>
-              <div>
-                <p className="text-sm text-on-surface font-bold">Sugerencia de Calidad</p>
-                <p className="text-xs text-on-surface-variant mt-1">Para mejores resultados, usa imágenes en alta resolución (mínimo 1920x1080). Las vistas previas muestran exactamente como se vera el contenido en la tienda publica, con los mismos estilos y efectos. Recuerda hacer clic en Guardar despues de cada cambio.</p>
               </div>
             </div>
           </div>
