@@ -1833,6 +1833,8 @@ function AdminContent() {
                     >
                       <option value="cartas">Cartas</option>
                       <option value="merchandising">Merchandising</option>
+                      <option value="juegos-de-mesa">Juegos de Mesa</option>
+                      <option value="accesorios">Accesorios</option>
                     </select>
                   </div>
                   <div>
@@ -1884,8 +1886,15 @@ function AdminContent() {
                         <tr key={cat.id} className="hover:bg-surface-container/30 transition-colors group">
                           <td className="px-6 py-4 font-bold">{cat.name}</td>
                           <td className="px-6 py-4">
-                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${cat.section === 'cartas' ? 'bg-primary/20 text-primary' : 'bg-secondary/20 text-secondary'}`}>
-                              {cat.section || 'merchandising'}
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
+                              cat.section === 'cartas' ? 'bg-primary/20 text-primary' : 
+                              cat.section === 'merchandising' ? 'bg-secondary/20 text-secondary' :
+                              cat.section === 'juegos-de-mesa' ? 'bg-tertiary/20 text-tertiary' :
+                              'bg-surface-container-highest text-on-surface-variant'
+                            }`}>
+                              {cat.section === 'juegos-de-mesa' ? 'Juegos de Mesa' : 
+                               cat.section === 'accesorios' ? 'Accesorios' : 
+                               (cat.section || 'merchandising')}
                             </span>
                           </td>
                           <td className="px-6 py-4">
