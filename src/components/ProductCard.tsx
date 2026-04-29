@@ -22,6 +22,7 @@ export default function ProductCard({ product, showSizes = false }: ProductCardP
   const hasSizes = availableSizes.length > 0;
   const sizeKeysOriginal = Object.keys(sizesObj);
   const hasNoStockSizes = sizeKeysOriginal.length > 0 && availableSizes.length === 0;
+  const isOutOfStock = hasNoStockSizes || (sizeKeysOriginal.length === 0 && Number(product.stock) <= 0);
 
   const currentSize = selectedSize || availableSizes[0];
 
@@ -29,7 +30,7 @@ export default function ProductCard({ product, showSizes = false }: ProductCardP
     e.preventDefault();
     e.stopPropagation();
     
-    if (hasNoStockSizes) return;
+    if (isOutOfStock) return;
 
     addItem({
       ...product,
@@ -48,7 +49,7 @@ export default function ProductCard({ product, showSizes = false }: ProductCardP
           src={getSEOImageUrl(product.image_url) || `https://picsum.photos/seed/${product.id}/500/500`} 
           alt={product.title} 
           referrerPolicy="no-referrer" 
-          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" 
+          className={`w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 ${isOutOfStock ? 'grayscale opacity-60' : ''}`} 
         />
         <div className="absolute top-3 left-3 bg-secondary-container/80 backdrop-blur-sm text-on-secondary-container px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider">
           {product.category}
@@ -87,9 +88,9 @@ export default function ProductCard({ product, showSizes = false }: ProductCardP
             </div>
           )}
 
-          {hasNoStockSizes && (
-            <div className="text-error text-[10px] font-bold text-center bg-error/10 py-1 rounded uppercase tracking-widest">
-              Agotado
+          {isOutOfStock && (
+            <div className="text-error text-[10px] font-black text-center bg-error/10 py-2 rounded-xl uppercase tracking-widest border border-error/20">
+              Agotado temporalmente
             </div>
           )}
 
@@ -98,9 +99,9 @@ export default function ProductCard({ product, showSizes = false }: ProductCardP
               {currencySymbol}{convertedPrice}
             </span>
             <button 
-              disabled={hasNoStockSizes}
+              disabled={isOutOfStock}
               onClick={handleAddToCart}
-              className="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center hover:bg-primary hover:text-on-primary transition-all shadow-sm active:scale-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center hover:bg-primary hover:text-on-primary transition-all shadow-sm active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed disabled:grayscale"
               title="Añadir al carrito"
             >
               <span className="material-symbols-outlined text-lg">add_shopping_cart</span>

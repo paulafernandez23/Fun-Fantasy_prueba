@@ -115,6 +115,9 @@ export default function ProductDetail() {
   }
 
   const convertedPrice = (Number(product.price) * exchangeRate).toFixed(2);
+  const sizesObj = product.sizes || {};
+  const availableSizes = Object.keys(sizesObj).filter(sz => sizesObj[sz] > 0);
+  const isOutOfStock = (Object.keys(sizesObj).length > 0 && availableSizes.length === 0) || (Object.keys(sizesObj).length === 0 && Number(product.stock) <= 0);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -143,7 +146,7 @@ export default function ProductDetail() {
               <img 
                 src={getSEOImageUrl(activeImage) || `https://picsum.photos/seed/${product.id}/800/800`} 
                 alt={product.title}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${isOutOfStock ? 'grayscale opacity-60' : ''}`}
               />
             </button>
           </div>
@@ -170,7 +173,14 @@ export default function ProductDetail() {
               {product.category}
             </div>
             <h1 className="font-headline text-4xl md:text-5xl font-bold text-on-background mb-2">{product.title}</h1>
-            <p className="text-2xl font-bold text-primary mb-4">{currencySymbol}{convertedPrice}</p>
+            <div className="flex items-center gap-4 mb-4">
+              <p className="text-2xl font-bold text-primary">{currencySymbol}{convertedPrice}</p>
+              {isOutOfStock && (
+                <span className="px-3 py-1 bg-error/10 text-error rounded-full text-xs font-bold uppercase tracking-widest border border-error/20">
+                  Agotado temporalmente
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="prose prose-sm text-on-surface-variant mb-8 max-w-none">
@@ -214,8 +224,9 @@ export default function ProductDetail() {
             <div className="flex flex-wrap items-center gap-6 mb-6">
               <div className="flex flex-col gap-2">
                 <span className="text-xs font-bold text-on-surface-variant uppercase tracking-tighter">{t.common.quantity}</span>
-                <div className="flex items-center bg-surface-container rounded-full p-1 border border-outline-variant/30">
+                <div className={`flex items-center bg-surface-container rounded-full p-1 border border-outline-variant/30 ${isOutOfStock ? 'opacity-50 pointer-events-none' : ''}`}>
                   <button 
+                    disabled={isOutOfStock}
                     onClick={() => setQuantity(q => Math.max(1, q - 1))}
                     className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container-high transition-colors"
                   >
@@ -223,6 +234,7 @@ export default function ProductDetail() {
                   </button>
                   <span className="w-12 text-center font-bold text-lg">{quantity}</span>
                   <button 
+                    disabled={isOutOfStock}
                     onClick={() => setQuantity(q => q + 1)}
                     className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container-high transition-colors"
                   >
@@ -234,21 +246,23 @@ export default function ProductDetail() {
               <div className="flex-grow flex flex-col gap-2 min-w-[200px]">
                 <span className="text-xs font-bold text-transparent select-none uppercase">.</span>
                 <button 
+                  disabled={isOutOfStock}
                   onClick={handleAddToCart}
-                  className="w-full py-4 bg-primary-container text-on-primary-container rounded-full font-bold flex items-center justify-center gap-2 hover:bg-primary hover:text-on-primary transition-all shadow-sm active:scale-[0.98]"
+                  className="w-full py-4 bg-primary-container text-on-primary-container rounded-full font-bold flex items-center justify-center gap-2 hover:bg-primary hover:text-on-primary transition-all shadow-sm active:scale-[0.98] disabled:opacity-40 disabled:grayscale disabled:cursor-not-allowed"
                 >
                   <span className="material-symbols-outlined">add_shopping_cart</span>
-                  {t.common.addCart}
+                  {isOutOfStock ? 'Sin Stock' : t.common.addCart}
                 </button>
               </div>
             </div>
 
             <button 
+              disabled={isOutOfStock}
               onClick={handleBuyNow}
-              className="w-full py-4 bg-primary text-on-primary rounded-full font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-lg active:scale-[0.98]"
+              className="w-full py-4 bg-primary text-on-primary rounded-full font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-lg active:scale-[0.98] disabled:opacity-40 disabled:grayscale disabled:cursor-not-allowed"
             >
               <span className="material-symbols-outlined">bolt</span>
-              {t.common.buyNow}
+              {isOutOfStock ? 'No disponible' : t.common.buyNow}
             </button>
           </div>
 

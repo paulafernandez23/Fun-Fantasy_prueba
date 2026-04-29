@@ -556,10 +556,31 @@ function AdminContent() {
 
   const handleBulkUpload = async (file: File) => {
     setIsSaving(true);
-    const reader = new FileReader();
     
-    reader.onload = async (e) => {
-      const content = e.target?.result as string;
+    try {
+      // Usar ArrayBuffer para detectar encoding si es necesario
+      const buffer = await file.arrayBuffer();
+      
+      // Intentar decodificar como UTF-8 primero
+      let content = new TextDecoder('utf-8').decode(buffer);
+      
+      // Si detectamos muchos caracteres de reemplazo () o es un archivo de Windows, 
+      // reintentar con Windows-1252 (común en Excel/XML españoles antiguos)
+      if (content.includes('') || content.includes('\ufffd')) {
+        content = new TextDecoder('windows-1252').decode(buffer);
+      }
+
+      // Función de limpieza de texto
+      const cleanText = (text: string) => {
+        if (!text) return "";
+        return text
+          .replace(/<br\s*\/?>/gi, '\n') // Convertir <br> a saltos de línea
+          .replace(/<[^>]*>/g, '')      // Eliminar cualquier otra etiqueta HTML
+          .replace(/&nbsp;/g, ' ')      // Limpiar espacios HTML
+          .replace(/\s\s+/g, ' ')       // Eliminar espacios múltiples
+          .trim();
+      };
+
       let products: any[] = [];
 
       try {
@@ -583,7 +604,7 @@ function AdminContent() {
                 else if (h.includes('tipo') || h.includes('type')) obj.type = val.toLowerCase().replace(/\s+/g, '-');
                 else if (h.includes('cat')) obj.category = val;
                 else if (h.includes('sub')) obj.subcategory = val;
-                else if (h.includes('desc')) obj.description = val;
+                else if (h.includes('desc')) obj.description = cleanText(val);
                 else if (h.includes('img') || h.includes('imagen')) obj.image_url = val;
                 else obj[h] = val;
               });
@@ -610,10 +631,10 @@ function AdminContent() {
             if (!rawName.toUpperCase().includes("FINAL FANTASY")) continue;
 
             const obj: any = {
-              title: rawName,
+              title: cleanText(rawName),
               price: parseFloat(getVal("price").replace(',', '.')) || 0,
               image_url: getVal("image") || getVal("image_url"),
-              description: getVal("description_es") || getVal("description"),
+              description: cleanText(getVal("description_es") || getVal("description")),
               product_model: getVal("product_model"),
               ean: getVal("EAN"),
               isFeatured: false
@@ -734,9 +755,6 @@ function AdminContent() {
       } finally {
         setIsSaving(false);
       }
-    };
-
-    reader.readAsText(file);
   };
 
   const handleSaveContent = async (pageId: string) => {
