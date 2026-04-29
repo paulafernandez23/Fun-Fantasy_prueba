@@ -61,17 +61,23 @@ export default function Cartas() {
   const filteredCards = allCards.filter(card => {
     const matchesTab = activeTab === t.cards.filterAll || card.category === activeTab;
     const matchesSearch = (card.title || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         (card.expansion || '').toLowerCase().includes(searchQuery.toLowerCase());
+                         (card.expansion || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (card.tags || []).some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
     
-    const matchesExpansion = selectedExpansions.length === 0 || selectedExpansions.includes(card.expansion);
+    // Ahora matchesExpansion busca tanto en el campo expansion como en los tags del producto
+    const matchesExpansion = selectedExpansions.length === 0 || 
+                             selectedExpansions.includes(card.expansion) ||
+                             selectedExpansions.some(exp => (card.tags || []).includes(exp));
     
     return matchesTab && matchesSearch && matchesExpansion;
   });
 
+  // Extraer expansiones de las etiquetas de productos que sean "Sobres"
   const availableExpansions = (Array.from(new Set(
     allCards
-      .map(card => card.expansion)
-      .filter(exp => exp)
+      .filter(card => card.category === 'Sobres')
+      .flatMap(card => card.tags || [])
+      .filter(tag => tag)
   )) as string[]).sort();
 
   const tabs = [t.cards.filterAll, ...dynamicCategories];
