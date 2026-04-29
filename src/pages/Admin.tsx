@@ -1063,6 +1063,8 @@ function AdminContent() {
                       >
                         <option value="cartas">Cartas (TCG)</option>
                         <option value="merchandising">Merchandising</option>
+                        <option value="juegos-de-mesa">Juegos de Mesa</option>
+                        <option value="accesorios">Accesorios</option>
                       </select>
                     </div>
                     <div className="space-y-1">
