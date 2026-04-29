@@ -16,6 +16,7 @@ function AdminContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [orderFilter, setOrderFilter] = useState('Todos los estados');
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{current: number, total: number} | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -697,8 +698,12 @@ function AdminContent() {
         // Lógica de Upsert (Actualizar si existe por título, si no crear)
         let updatedCount = 0;
         let createdCount = 0;
+        setUploadProgress({ current: 0, total: products.length });
 
-        for (const pData of products) {
+        for (let i = 0; i < products.length; i++) {
+          const pData = products[i];
+          setUploadProgress({ current: i + 1, total: products.length });
+          
           if (!pData.title) continue;
           
           // Buscar por modelo primero si existe, si no por título
@@ -761,11 +766,13 @@ function AdminContent() {
         showAlert('Error de Procesamiento', err.message || 'Hubo un problema procesando el archivo.');
       } finally {
         setIsSaving(false);
+        setUploadProgress(null);
       }
     } catch (err: any) {
       console.error("Error crítico al leer el archivo:", err);
       showAlert('Error Crítico', err.message || 'Error al leer el archivo físico.');
       setIsSaving(false);
+      setUploadProgress(null);
     }
   };
 
@@ -2439,6 +2446,35 @@ function AdminContent() {
           </button>
         </div>
       </aside>
+
+      {/* Progress Overlay for Bulk Upload */}
+      {uploadProgress && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="bg-surface-container-highest p-8 rounded-3xl shadow-2xl border border-outline/20 max-w-md w-full mx-4">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                <span className="material-symbols-outlined text-primary text-3xl animate-bounce">upload_file</span>
+              </div>
+              <h3 className="text-xl font-bold text-on-surface mb-2">Importando Productos</h3>
+              <p className="text-on-surface-variant mb-6">
+                Procesando {uploadProgress.current} de {uploadProgress.total} productos...
+              </p>
+              
+              {/* Progress Bar Container */}
+              <div className="w-full h-3 bg-surface-container rounded-full overflow-hidden mb-2">
+                <div 
+                  className="h-full bg-primary transition-all duration-300 ease-out shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]"
+                  style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+                />
+              </div>
+              <div className="flex justify-between w-full text-[10px] font-bold text-primary uppercase tracking-widest">
+                <span>{Math.round((uploadProgress.current / uploadProgress.total) * 100)}%</span>
+                <span>Por favor, no cierres esta ventana</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="flex-grow flex flex-col h-screen overflow-hidden">
