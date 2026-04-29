@@ -5,6 +5,7 @@ import { useSettingsStore } from '../store/settingsStore';
 import { translations } from '../lib/translations';
 import ProductCard from '../components/ProductCard';
 import { updateMetaTags } from '../lib/seoUtils';
+import TabSlider from '../components/TabSlider';
 
 export default function Merchandising() {
   const language = useSettingsStore(state => state.language);
@@ -74,24 +75,16 @@ export default function Merchandising() {
         </p>
       </div>
 
-      <div className="mb-12 flex flex-col md:flex-row gap-6 justify-between items-center bg-surface-container-low p-6 rounded-3xl border border-outline-variant/30 shadow-sm">
-        <div className="flex overflow-x-auto pb-2 md:pb-0 gap-3 w-full md:w-auto hide-scrollbar">
-          {tabs.map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-8 py-3 rounded-2xl whitespace-nowrap font-bold transition-all ${
-                activeTab === tab 
-                  ? 'bg-primary text-on-primary shadow-lg shadow-primary/20 scale-105' 
-                  : 'bg-surface-container-highest text-on-surface hover:bg-outline-variant/20'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
+      <div className="mb-12 flex flex-col md:flex-row gap-8 justify-between items-center bg-surface-container-low p-6 rounded-[2rem] border border-outline-variant/30 shadow-sm relative overflow-hidden">
+        <div className="w-full md:flex-1 min-w-0">
+          <TabSlider 
+            tabs={tabs} 
+            activeTab={activeTab} 
+            onTabChange={setActiveTab} 
+          />
         </div>
         
-        <div className="relative w-full md:w-80 group">
+        <div className="relative w-full md:w-80 group shrink-0">
           <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors">search</span>
           <input 
             type="text" 
