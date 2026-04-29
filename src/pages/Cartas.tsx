@@ -16,8 +16,6 @@ export default function Cartas() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(t.cards.filterAll);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
-  const [selectedRarities, setSelectedRarities] = useState<string[]>([]);
-  const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [selectedExpansions, setSelectedExpansions] = useState<string[]>([]);
   const [visibleCount, setVisibleCount] = useState(9);
   const [dynamicCategories, setDynamicCategories] = useState<string[]>([]);
@@ -26,7 +24,7 @@ export default function Cartas() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch products
+        // Fetch products of type 'cartas'
         const pq = query(collection(db, 'products'), where('type', '==', 'cartas'));
         const pSnap = await getDocs(pq);
         setAllCards(pSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -49,9 +47,9 @@ export default function Cartas() {
 
     // SEO
     updateMetaTags({
-      title: 'Cartas TCG Final Fantasy - Colección Completa',
-      description: 'Explora nuestra vasta colección de cartas de Final Fantasy TCG. Desde ediciones clásicas hasta las últimas novedades y cartas legendarias.',
-      keywords: 'Final Fantasy TCG, Cartas, Coleccionismo, Opus, Mazos, Cartas Raras',
+      title: 'Cartas TCG Final Fantasy - Material Sellado y Expansiones',
+      description: 'Encuentra sobres, mazos de inicio y cajas de colección de Final Fantasy TCG. Filtra por expansión y encuentra las últimas novedades.',
+      keywords: 'Final Fantasy TCG, Sobres, Mazos, Expansiones, Opus, Crystal Force',
       type: 'website'
     });
   }, []);
@@ -62,22 +60,14 @@ export default function Cartas() {
 
   const filteredCards = allCards.filter(card => {
     const matchesTab = activeTab === t.cards.filterAll || card.category === activeTab;
-    const matchesSearch = (card.title || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (card.title || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                         (card.expansion || '').toLowerCase().includes(searchQuery.toLowerCase());
     
-    const cardTags = card.tags || [];
-    const matchesRarity = selectedRarities.length === 0 || selectedRarities.some(r => cardTags.includes(r));
-    const matchesElement = selectedElements.length === 0 || selectedElements.some(e => cardTags.includes(e));
     const matchesExpansion = selectedExpansions.length === 0 || selectedExpansions.includes(card.expansion);
     
-    return matchesTab && matchesSearch && matchesRarity && matchesElement && matchesExpansion;
+    return matchesTab && matchesSearch && matchesExpansion;
   });
 
-  const availableRarities = ['Común', 'Poco Común', 'Rara', 'Mítica', 'Legendaria', 'L', 'R', 'S', 'H', 'C'].filter(r => 
-    allCards.some(card => (card.tags || []).includes(r))
-  );
-  const availableElements = ['Fuego', 'Agua', 'Tierra', 'Aire', 'Éter', 'Ice', 'Lightning', 'Wind', 'Earth', 'Water', 'Fire', 'Light', 'Dark'].filter(e => 
-    allCards.some(card => (card.tags || []).includes(e))
-  );
   const availableExpansions = (Array.from(new Set(
     allCards
       .map(card => card.expansion)
@@ -93,10 +83,11 @@ export default function Cartas() {
           {t.cards.title}
         </h1>
         <p className="text-on-surface-variant text-lg max-w-2xl">
-          Explora nuestra vasta colección de cartas de Final Fantasy. Desde clásicos hasta las ediciones más raras.
+          Material oficial de Final Fantasy TCG: sobres, mazos y cajas de colección de todas las expansiones.
         </p>
       </div>
 
+      {/* Tabs / Categories */}
       <div className="mb-10 flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center bg-surface-container-low p-6 rounded-3xl border border-outline-variant/30">
         <div className="flex overflow-x-auto pb-2 lg:pb-0 gap-3 w-full lg:w-auto hide-scrollbar">
           {tabs.map(tab => (
@@ -114,6 +105,7 @@ export default function Cartas() {
           ))}
         </div>
         
+        {/* Search */}
         <div className="relative w-full lg:w-96 group">
           <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors">search</span>
           <input 
@@ -127,55 +119,47 @@ export default function Cartas() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-12">
-        {/* Filters Sidebar */}
+        {/* Sidebar - Just Expansion now */}
         <aside className="w-full lg:w-72 shrink-0">
           <div className="bg-surface-container-lowest p-8 rounded-[2.5rem] border border-outline-variant/30 sticky top-24 shadow-sm">
             <h2 className="font-headline font-bold text-xl mb-8 flex items-center gap-3">
               <span className="material-symbols-outlined text-primary">filter_list</span>
-              Filtros
+              Filtrar
             </h2>
             
             <div className="space-y-10">
-              {availableRarities.length > 0 && (
-                <FilterGroup 
-                  title={t.cards.rarity} 
-                  options={availableRarities} 
-                  selected={selectedRarities} 
-                  onToggle={(item) => toggleFilter(selectedRarities, setSelectedRarities, item)} 
-                />
-              )}
-              {availableElements.length > 0 && (
-                <FilterGroup 
-                  title={t.cards.element} 
-                  options={availableElements} 
-                  selected={selectedElements} 
-                  onToggle={(item) => toggleFilter(selectedElements, setSelectedElements, item)} 
-                />
-              )}
-              {availableExpansions.length > 0 && (
+              {availableExpansions.length > 0 ? (
                 <FilterGroup 
                   title={t.cards.expansion} 
                   options={availableExpansions} 
                   selected={selectedExpansions} 
                   onToggle={(item) => toggleFilter(selectedExpansions, setSelectedExpansions, item)} 
                 />
+              ) : (
+                <p className="text-sm text-on-surface-variant italic">No hay expansiones disponibles para filtrar.</p>
               )}
             </div>
+
+            {(selectedExpansions.length > 0 || searchQuery) && (
+              <button 
+                onClick={() => {
+                  setSelectedExpansions([]);
+                  setSearchQuery('');
+                }}
+                className="mt-10 w-full py-3 text-sm font-bold text-primary hover:bg-primary/5 rounded-xl transition-colors border border-primary/20"
+              >
+                Limpiar todo
+              </button>
+            )}
           </div>
         </aside>
 
         {/* Product Grid */}
         <div className="flex-grow">
           <div className="flex justify-between items-center mb-8 bg-surface-container-lowest px-6 py-4 rounded-2xl border border-outline-variant/10">
-            <span className="text-on-surface-variant font-medium">Mostrando <span className="text-primary font-bold">{filteredCards.length}</span> resultados</span>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest hidden sm:inline">Ordenar:</span>
-              <select className="bg-transparent border-none outline-none font-bold text-primary cursor-pointer">
-                <option>Más recientes</option>
-                <option>Precio: Menor a Mayor</option>
-                <option>Precio: Mayor a Menor</option>
-              </select>
-            </div>
+            <span className="text-on-surface-variant font-medium">
+              Mostrando <span className="text-primary font-bold">{filteredCards.length}</span> productos
+            </span>
           </div>
 
           {loading ? (
@@ -189,19 +173,8 @@ export default function Cartas() {
               <div className="w-24 h-24 bg-surface-container rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="material-symbols-outlined text-5xl text-outline">search_off</span>
               </div>
-              <h3 className="text-2xl font-bold text-on-surface mb-2">No se encontraron cartas</h3>
-              <p className="text-on-surface-variant text-lg">Intenta ajustar los filtros o los términos de búsqueda.</p>
-              <button 
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedRarities([]);
-                  setSelectedElements([]);
-                  setSelectedExpansions([]);
-                }}
-                className="mt-8 px-8 py-3 bg-primary/10 text-primary rounded-full font-bold hover:bg-primary/20 transition-colors"
-              >
-                Limpiar Filtros
-              </button>
+              <h3 className="text-2xl font-bold text-on-surface mb-2">No se encontraron productos</h3>
+              <p className="text-on-surface-variant text-lg">Prueba con otra expansión o categoría.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
@@ -213,20 +186,11 @@ export default function Cartas() {
           
           {!loading && filteredCards.length > visibleCount && (
             <div className="mt-20 flex flex-col items-center gap-6">
-              <p className="text-on-surface-variant font-medium text-center">
-                Has visto {Math.min(visibleCount, filteredCards.length)} de {filteredCards.length} cartas
-              </p>
-              <div className="w-64 h-1.5 bg-surface-container rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-primary transition-all duration-700 ease-out" 
-                  style={{ width: `${(Math.min(visibleCount, filteredCards.length) / filteredCards.length) * 100}%` }}
-                ></div>
-              </div>
               <button 
                 onClick={() => setVisibleCount(prev => prev + 9)}
                 className="px-10 py-4 bg-surface-container-highest text-on-surface rounded-2xl font-bold hover:bg-outline-variant/20 transition-all transform hover:-translate-y-1 border border-outline-variant/50 shadow-sm active:scale-95"
               >
-                Cargar más cartas
+                Cargar más productos
               </button>
             </div>
           )}
@@ -240,7 +204,7 @@ function FilterGroup({ title, options, selected, onToggle }: { title: string, op
   return (
     <div>
       <h3 className="font-headline font-bold mb-5 text-sm text-on-surface-variant uppercase tracking-[0.2em]">{title}</h3>
-      <div className="space-y-4">
+      <div className="space-y-4 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
         {options.map(opt => (
           <label key={opt} className="flex items-center gap-4 cursor-pointer group">
             <div className="relative">
