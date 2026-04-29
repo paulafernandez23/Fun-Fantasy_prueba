@@ -739,9 +739,9 @@ function AdminContent() {
             const updateData = {
               ...cleanData,
               // Si viene de CSV, usamos la categoría del CSV. Si no, protegemos la existente.
-              category: isFromCSV ? (pData.category || existingData.category) : (existingData.category || pData.category),
-              subcategory: isFromCSV ? (pData.subcategory || existingData.subcategory) : (existingData.subcategory || pData.subcategory),
-              type: isFromCSV ? (pData.type || existingData.type) : (existingData.type || pData.type)
+              category: isFromCSV ? (pData.category || existingData.category || "") : (existingData.category || pData.category || ""),
+              subcategory: isFromCSV ? (pData.subcategory || existingData.subcategory || "") : (existingData.subcategory || pData.subcategory || ""),
+              type: isFromCSV ? (pData.type || existingData.type || "merchandising") : (existingData.type || pData.type || "merchandising")
             };
             await updateDoc(doc(db, 'products', existingDocId), updateData);
             updatedCount++;
