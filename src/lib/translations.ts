@@ -4,6 +4,8 @@ export const translations = {
       home: 'Inicio',
       tcg: 'Cartas',
       merch: 'Merchandising',
+      boardgames: 'Juegos de Mesa',
+      accessories: 'Accesorios',
       contact: 'Contacto',
       admin: 'Panel Admin',
       news: 'Noticias',
@@ -43,6 +45,14 @@ export const translations = {
       categoryClothing: 'Ropa',
       categoryFigures: 'Figuras',
       categoryAccessories: 'Accesorios'
+    },
+    boardgames: {
+      title: 'Juegos de Mesa y Rol',
+      searchPlaceholder: 'Buscar juegos...',
+    },
+    accessories: {
+      title: 'Accesorios para Juegos',
+      searchPlaceholder: 'Buscar accesorios...',
     },
     common: {
       addCart: 'Añadir al carrito',
@@ -98,6 +108,8 @@ export const translations = {
       home: 'Home',
       tcg: 'Cards',
       merch: 'Merchandising',
+      boardgames: 'Board Games',
+      accessories: 'Accessories',
       contact: 'Contact',
       admin: 'Admin Panel',
       news: 'News',
@@ -126,6 +138,14 @@ export const translations = {
       categoryClothing: 'Clothing',
       categoryFigures: 'Figures',
       categoryAccessories: 'Accessories'
+    },
+    boardgames: {
+      title: 'Board Games & RPG',
+      searchPlaceholder: 'Search games...',
+    },
+    accessories: {
+      title: 'Game Accessories',
+      searchPlaceholder: 'Search accessories...',
     },
     cart: {
       title: 'Your Cart',

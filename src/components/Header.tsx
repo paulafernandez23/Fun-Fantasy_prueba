@@ -40,6 +40,8 @@ export default function Header() {
           <Link to="/" className="text-on-surface-variant hover:text-primary transition-colors font-medium">{t.nav.home}</Link>
           <Link to="/cartas" className="text-on-surface-variant hover:text-primary transition-colors font-medium">{t.nav.tcg}</Link>
           <Link to="/merchandising" className="text-on-surface-variant hover:text-primary transition-colors font-medium">{t.nav.merch}</Link>
+          <Link to="/juegos-de-mesa" className="text-on-surface-variant hover:text-primary transition-colors font-medium">{t.nav.boardgames}</Link>
+          <Link to="/accesorios" className="text-on-surface-variant hover:text-primary transition-colors font-medium">{t.nav.accessories}</Link>
           <Link to="/noticias" className="text-on-surface-variant hover:text-primary transition-colors font-medium">{t.nav.news || 'Noticias'}</Link>
           <Link to="/contacto" className="text-on-surface-variant hover:text-primary transition-colors font-medium">{t.nav.contact}</Link>
         </nav>

@@ -11,6 +11,8 @@ import Home from './pages/Home';
 import Cartas from './pages/Cartas';
 import Merchandising from './pages/Merchandising';
 import Contacto from './pages/Contacto';
+import JuegosMesa from './pages/JuegosMesa';
+import Accesorios from './pages/Accesorios';
 import Carrito from './pages/Carrito';
 import Admin from './pages/Admin';
 import ProductDetail from './pages/ProductDetail';
@@ -74,6 +76,8 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/cartas" element={<Cartas />} />
           <Route path="/merchandising" element={<Merchandising />} />
+          <Route path="/juegos-de-mesa" element={<JuegosMesa />} />
+          <Route path="/accesorios" element={<Accesorios />} />
           <Route path="/contacto" element={<Contacto />} />
           <Route path="/carrito" element={<Carrito />} />
           <Route path="/admin" element={<Admin />} />

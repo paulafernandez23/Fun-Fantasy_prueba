@@ -610,7 +610,17 @@ function AdminContent() {
             obj.category = rawCat.split('>')[0].trim() || "General";
             
             const catLower = rawCat.toLowerCase();
-            obj.type = (catLower.includes('cartas') || catLower.includes('tcg') || catLower.includes('card')) ? 'cartas' : 'merchandising';
+            const nameLower = rawName.toLowerCase();
+            
+            if (catLower.includes('cartas') || catLower.includes('tcg') || catLower.includes('card') || catLower.includes('sobre')) {
+              obj.type = 'cartas';
+            } else if (catLower.includes('mesa') || catLower.includes('tablero') || catLower.includes('board game') || catLower.includes('juego de rol') || nameLower.includes('juego de rol') || nameLower.includes('starter set')) {
+              obj.type = 'juegos-de-mesa';
+            } else if (catLower.includes('accesorio') || catLower.includes('funda') || catLower.includes('sleeves') || catLower.includes('tapete') || catLower.includes('playmat') || catLower.includes('deck box') || catLower.includes('dados') || catLower.includes('album')) {
+              obj.type = 'accesorios';
+            } else {
+              obj.type = 'merchandising';
+            }
 
             products.push(obj);
           }
