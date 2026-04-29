@@ -577,31 +577,57 @@ function AdminContent() {
         } else if (file.name.endsWith('.xml')) {
           const parser = new DOMParser();
           const xmlDoc = parser.parseFromString(content, "text/xml");
-          const items = xmlDoc.getElementsByTagName("product");
+          
+          let items = xmlDoc.getElementsByTagName("producto");
+          if (items.length === 0) {
+            items = xmlDoc.getElementsByTagName("product");
+          }
+
           for (let i = 0; i < items.length; i++) {
             const item = items[i];
-            const obj: any = {};
-            for (let j = 0; j < item.children.length; j++) {
-              obj[item.children[j].tagName] = item.children[j].textContent;
-            }
+            const getVal = (tagName: string) => {
+              const el = item.getElementsByTagName(tagName)[0];
+              return el ? el.textContent?.trim() || "" : "";
+            };
+
+            const rawName = getVal("name_es") || getVal("title") || getVal("name");
+            if (!rawName.toUpperCase().includes("FINAL FANTASY")) continue;
+
+            const obj: any = {
+              title: rawName,
+              price: parseFloat(getVal("price").replace(',', '.')) || 0,
+              image_url: getVal("image") || getVal("image_url"),
+              description: getVal("description_es") || getVal("description"),
+              product_model: getVal("product_model"),
+              ean: getVal("EAN"),
+              isFeatured: false
+            };
+            
+            const rawQty = getVal("quantity") || getVal("stock");
+            obj.stock = rawQty.toUpperCase() === "SIN STOCK" ? 0 : (parseInt(rawQty) || 0);
+
+            const rawCat = getVal("category");
+            obj.category = rawCat.split('>')[0].trim() || "General";
+            
+            const catLower = rawCat.toLowerCase();
+            obj.type = (catLower.includes('cartas') || catLower.includes('tcg') || catLower.includes('card')) ? 'cartas' : 'merchandising';
+
             products.push(obj);
           }
         }
 
-        // Auto-create missing categories
+        // Auto-creación de categorías faltantes
         let createdCategories = 0;
         const existingCategoryNames = new Set(allCategories.map(c => c.name.toLowerCase()));
         const uploadedCategories = new Set<string>();
         
         products.forEach(p => {
-          if (p.category && typeof p.category === 'string') {
-            uploadedCategories.add(p.category.trim());
-          }
+          if (p.category) uploadedCategories.add(p.category.trim());
         });
 
         for (const catName of Array.from(uploadedCategories)) {
           if (!existingCategoryNames.has(catName.toLowerCase())) {
-            const sampleProduct = products.find(p => p.category?.trim() === catName);
+            const sampleProduct = products.find(p => p.category === catName);
             const section = sampleProduct?.type || 'merchandising';
             
             await addDoc(collection(db, 'categories'), {
@@ -610,35 +636,29 @@ function AdminContent() {
               subcategories: []
             });
             createdCategories++;
-            existingCategoryNames.add(catName.toLowerCase()); // Avoid duplicates in loop
+            existingCategoryNames.add(catName.toLowerCase());
           }
         }
 
-        // Upsert Logic
+        // Lógica de Upsert (Actualizar si existe por título, si no crear)
         let updatedCount = 0;
         let createdCount = 0;
 
         for (const pData of products) {
           if (!pData.title) continue;
           
-          // Try to find by title to avoid duplicates
           const q = query(collection(db, 'products'), where('title', '==', pData.title));
           const querySnap = await getDocs(q);
           
           const cleanData = {
             ...pData,
-            price: Number(pData.price) || 0,
-            stock: Number(pData.stock) || 0,
-            isFeatured: pData.isFeatured === 'true' || pData.isFeatured === true,
             updated_at: Timestamp.now()
           };
 
           if (!querySnap.empty) {
-            // Update
             await updateDoc(doc(db, 'products', querySnap.docs[0].id), cleanData);
             updatedCount++;
           } else {
-            // Create
             await addDoc(collection(db, 'products'), {
               ...cleanData,
               created_at: Timestamp.now()
@@ -648,7 +668,7 @@ function AdminContent() {
         }
 
         loadData();
-        showAlert('Carga Completada', `Se han creado ${createdCount} productos y actualizado ${updatedCount}. ${createdCategories > 0 ? `Se han creado ${createdCategories} categorías nuevas.` : ''}`);
+        showAlert('Carga Completada', `Se han creado ${createdCount} productos de Final Fantasy y actualizado ${updatedCount}. ${createdCategories > 0 ? `Se han creado ${createdCategories} categorías nuevas.` : ''}`);
       } catch (err) {
         console.error(err);
         showAlert('Error', 'Hubo un problema procesando el archivo.');
