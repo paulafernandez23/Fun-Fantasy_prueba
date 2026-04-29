@@ -660,13 +660,16 @@ function AdminContent() {
           const q = query(collection(db, 'products'), where('title', '==', pData.title));
           const querySnap = await getDocs(q);
           
-          const cleanData = {
-            ...pData,
-            updated_at: Timestamp.now()
-          };
-
           if (!querySnap.empty) {
-            await updateDoc(doc(db, 'products', querySnap.docs[0].id), cleanData);
+            // PRODUCTO EXISTENTE: Respetamos la organización manual del administrador
+            const existingData = querySnap.docs[0].data();
+            const updateData = {
+              ...pData,
+              category: existingData.category || pData.category,
+              type: existingData.type || pData.type,
+              updated_at: Timestamp.now()
+            };
+            await updateDoc(doc(db, 'products', querySnap.docs[0].id), updateData);
             updatedCount++;
           } else {
             await addDoc(collection(db, 'products'), {
