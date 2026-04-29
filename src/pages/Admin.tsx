@@ -564,9 +564,10 @@ function AdminContent() {
       // Intentar decodificar como UTF-8 primero
       let content = new TextDecoder('utf-8').decode(buffer);
       
-      // Si detectamos muchos caracteres de reemplazo () o es un archivo de Windows, 
-      // reintentar con Windows-1252 (común en Excel/XML españoles antiguos)
-      if (content.includes('') || content.includes('\ufffd')) {
+      // Si detectamos caracteres de reemplazo () o el archivo no parece UTF-8 válido
+      // El carácter \ufffd es el que pone TextDecoder cuando no entiende algo en UTF-8
+      if (content.includes('\ufffd')) {
+        console.log("Detectada codificación no UTF-8, reintentando con Windows-1252...");
         content = new TextDecoder('windows-1252').decode(buffer);
       }
 
@@ -615,6 +616,12 @@ function AdminContent() {
           const parser = new DOMParser();
           const xmlDoc = parser.parseFromString(content, "text/xml");
           
+          // Verificar si el XML tiene errores de parseo
+          const parseError = xmlDoc.getElementsByTagName("parsererror");
+          if (parseError.length > 0) {
+            throw new Error("Error de formato en el XML: " + parseError[0].textContent);
+          }
+
           let items = xmlDoc.getElementsByTagName("producto");
           if (items.length === 0) {
             items = xmlDoc.getElementsByTagName("product");
@@ -749,15 +756,15 @@ function AdminContent() {
 
         loadData();
         showAlert('Carga Completada', `Se han creado ${createdCount} productos de Final Fantasy y actualizado ${updatedCount}. ${createdCategories > 0 ? `Se han creado ${createdCategories} categorías nuevas.` : ''}`);
-      } catch (err) {
-        console.error(err);
-        showAlert('Error', 'Hubo un problema procesando el archivo.');
+      } catch (err: any) {
+        console.error("Error procesando contenido del archivo:", err);
+        showAlert('Error de Procesamiento', err.message || 'Hubo un problema procesando el archivo.');
       } finally {
         setIsSaving(false);
       }
-    } catch (err) {
-      console.error(err);
-      showAlert('Error', 'Error crítico al leer el archivo.');
+    } catch (err: any) {
+      console.error("Error crítico al leer el archivo:", err);
+      showAlert('Error Crítico', err.message || 'Error al leer el archivo físico.');
       setIsSaving(false);
     }
   };
