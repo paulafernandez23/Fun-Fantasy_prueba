@@ -7,29 +7,41 @@ export const getSEOImageUrl = (url: string): string => {
   if (!url || typeof url !== 'string') return '';
   
   // Si ya es una URL de proxy, un blob o base64, no hacer nada
-  if (url.startsWith('/productos/') || url.startsWith('/pimg/') || url.startsWith('blob:') || url.startsWith('data:')) return url;
+  if (url.startsWith('/productos/') || url.startsWith('/pimg/') || url.startsWith('/noticias-img/') || url.startsWith('blob:') || url.startsWith('data:')) return url;
 
   // Detectar si es una URL de Firebase Storage
   if (url.includes('firebasestorage.googleapis.com') || url.includes('appspot.com')) {
-    // Extraer el nombre del archivo de la URL
-    const matches = url.match(/\/o\/product-images%2F([^?#]+)/);
-    
-    if (matches && matches[1]) {
-      // Limpiar el nombre del archivo: quitar timestamp y extensión para URL ultra-limpia
-      // Ejemplo: peluche-kuja-123456789.png -> peluche-kuja
-      const fileNameWithExt = matches[1];
+
+    // --- Imágenes de PRODUCTOS (carpeta product-images/) ---
+    const productMatches = url.match(/\/o\/product-images%2F([^?#]+)/);
+    if (productMatches && productMatches[1]) {
+      const fileNameWithExt = productMatches[1];
       const cleanFileName = fileNameWithExt
         .replace(/-\d+(?=\.[a-z]+$|$)/i, '') // Quita el timestamp (-12345)
-        .replace(/\.[a-z0-9]+$/i, '');       // Quita la extensión final de forma más robusta
+        .replace(/\.[a-z0-9]+$/i, '');       // Quita la extensión
       
       const proxyPath = `/productos/${cleanFileName}`;
-      
-      // Si estamos en localhost, necesitamos la URL completa de producción para que funcione el proxy
       if (typeof window !== 'undefined' && 
           (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
         return `https://ecommerce-ff-ff589.web.app${proxyPath}`;
       }
+      return proxyPath;
+    }
+
+    // --- Imágenes de NOTICIAS (carpeta news/) ---
+    // Formato en Storage: news/1714560000000_nombre-original.jpg
+    const newsMatches = url.match(/\/o\/news%2F([^?#]+)/);
+    if (newsMatches && newsMatches[1]) {
+      const fileNameWithExt = decodeURIComponent(newsMatches[1]);
+      const cleanFileName = fileNameWithExt
+        .replace(/^\d+_/, '')          // Quita el timestamp inicial (ej: "1714560000000_")
+        .replace(/\.[a-z0-9]+$/i, ''); // Quita la extensión
       
+      const proxyPath = `/noticias-img/${cleanFileName}`;
+      if (typeof window !== 'undefined' &&
+          (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        return `https://ecommerce-ff-ff589.web.app${proxyPath}`;
+      }
       return proxyPath;
     }
   }

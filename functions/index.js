@@ -85,48 +85,77 @@ exports.serveImage = functions.https.onRequest(async (req, res) => {
   }
 
   const fileName = req.path.split('/').pop();
-  
+
   if (!fileName) {
     return res.status(400).send("Falta el nombre del archivo");
   }
+
+  // Determinar si la petición es para noticias o para productos
+  // Las rutas /noticias/** apuntan a la carpeta news/ de Storage
+  const isNewsImage = req.path.startsWith('/noticias-img/');
+  const storageFolder = isNewsImage ? 'news' : 'product-images';
 
   const bucket = admin.storage().bucket();
   const extensions = ['', '.png', '.jpg', '.jpeg', '.webp'];
   let fileToServe = null;
 
   try {
-    // 1. Intentar encontrar el archivo directamente con extensiones comunes
-    for (const ext of extensions) {
-      const filePath = `product-images/${fileName}${ext}`;
-      const file = bucket.file(filePath);
-      const [exists] = await file.exists();
-      if (exists) {
-        fileToServe = file;
-        break;
-      }
-    }
-
-    // 2. Si no se encuentra (posiblemente por el timestamp), buscar por prefijo
-    if (!fileToServe) {
-      console.log(`Buscando por prefijo para: ${fileName}`);
-      const [files] = await bucket.getFiles({ 
-        prefix: `product-images/${fileName}`,
-        maxResults: 1 
+    if (isNewsImage) {
+      // Las imágenes de noticias tienen timestamp: news/1234567890_nombre-original.jpg
+      // El fileName que llega es el nombre limpio (sin timestamp ni extensión).
+      // Buscamos directamente por prefijo ya que el nombre en Storage lleva timestamp delante.
+      console.log(`[news] Buscando imagen de noticia por prefijo para: ${fileName}`);
+      const [files] = await bucket.getFiles({
+        prefix: `${storageFolder}/`,
+        maxResults: 500
       });
-      
-      if (files.length > 0) {
-        fileToServe = files[0];
-        console.log(`Imagen encontrada por prefijo: ${fileToServe.name}`);
+
+      // Buscar el archivo cuyo nombre (tras el timestamp_) coincida con el slug recibido
+      fileToServe = files.find(f => {
+        const baseName = f.name.split('/').pop() || '';
+        // Eliminar timestamp inicial (ej: "1714560000000_") y extensión para comparar
+        const withoutTimestamp = baseName.replace(/^\d+_/, '');
+        const slug = withoutTimestamp.replace(/\.[a-z0-9]+$/i, '');
+        return slug === fileName;
+      }) || null;
+
+      if (fileToServe) {
+        console.log(`[news] Imagen encontrada: ${fileToServe.name}`);
+      }
+    } else {
+      // Productos: 1. Buscar directamente con extensiones comunes
+      for (const ext of extensions) {
+        const filePath = `${storageFolder}/${fileName}${ext}`;
+        const file = bucket.file(filePath);
+        const [exists] = await file.exists();
+        if (exists) {
+          fileToServe = file;
+          break;
+        }
+      }
+
+      // Productos: 2. Si no se encuentra (posiblemente por el timestamp), buscar por prefijo
+      if (!fileToServe) {
+        console.log(`[products] Buscando por prefijo para: ${fileName}`);
+        const [files] = await bucket.getFiles({
+          prefix: `${storageFolder}/${fileName}`,
+          maxResults: 1
+        });
+
+        if (files.length > 0) {
+          fileToServe = files[0];
+          console.log(`[products] Imagen encontrada por prefijo: ${fileToServe.name}`);
+        }
       }
     }
 
     if (!fileToServe) {
-      console.warn(`Imagen no encontrada para: ${fileName}`);
+      console.warn(`Imagen no encontrada para: ${fileName} en carpeta: ${storageFolder}`);
       return res.status(404).send("Imagen no encontrada");
     }
 
     const [metadata] = await fileToServe.getMetadata();
-    
+
     res.setHeader("Content-Type", metadata.contentType || "image/jpeg");
     res.setHeader("Cache-Control", "public, max-age=31536000, s-maxage=31536000, immutable");
 

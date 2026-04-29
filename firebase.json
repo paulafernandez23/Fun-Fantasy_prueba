@@ -34,6 +34,10 @@
         "function": "serveImage"
       },
       {
+        "source": "/noticias-img/**",
+        "function": "serveImage"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
