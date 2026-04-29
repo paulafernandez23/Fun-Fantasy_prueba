@@ -755,6 +755,11 @@ function AdminContent() {
       } finally {
         setIsSaving(false);
       }
+    } catch (err) {
+      console.error(err);
+      showAlert('Error', 'Error crítico al leer el archivo.');
+      setIsSaving(false);
+    }
   };
 
   const handleSaveContent = async (pageId: string) => {
