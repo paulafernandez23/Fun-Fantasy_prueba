@@ -566,14 +566,30 @@ function AdminContent() {
         if (file.name.endsWith('.json')) {
           products = JSON.parse(content);
         } else if (file.name.endsWith('.csv')) {
-          const lines = content.split('\n');
-          const headers = lines[0].split(',').map(h => h.trim());
-          products = lines.slice(1).filter(l => l.trim()).map(line => {
-            const values = line.split(',').map(v => v.trim());
-            const obj: any = {};
-            headers.forEach((h, i) => { obj[h] = values[i]; });
-            return obj;
-          });
+          const lines = content.split(/\r?\n/).filter(l => l.trim());
+          if (lines.length > 0) {
+            const separator = lines[0].includes(';') ? ';' : ',';
+            const headers = lines[0].split(separator).map(h => h.trim().toLowerCase());
+            
+            products = lines.slice(1).map(line => {
+              const values = line.split(separator).map(v => v.trim());
+              const obj: any = {};
+              headers.forEach((h, i) => {
+                const val = values[i] || "";
+                if (h.includes('tit') || h.includes('nom')) obj.title = val;
+                else if (h.includes('mod')) obj.product_model = val;
+                else if (h.includes('prec') || h.includes('price')) obj.price = parseFloat(val.replace(',', '.')) || 0;
+                else if (h.includes('stock') || h.includes('cant')) obj.stock = parseInt(val) || 0;
+                else if (h.includes('tipo') || h.includes('type')) obj.type = val.toLowerCase().replace(/\s+/g, '-');
+                else if (h.includes('cat')) obj.category = val;
+                else if (h.includes('sub')) obj.subcategory = val;
+                else if (h.includes('desc')) obj.description = val;
+                else if (h.includes('img') || h.includes('imagen')) obj.image_url = val;
+                else obj[h] = val;
+              });
+              return obj;
+            }).filter(p => p.title && p.title.toUpperCase().includes("FINAL FANTASY"));
+          }
         } else if (file.name.endsWith('.xml')) {
           const parser = new DOMParser();
           const xmlDoc = parser.parseFromString(content, "text/xml");
@@ -657,19 +673,49 @@ function AdminContent() {
         for (const pData of products) {
           if (!pData.title) continue;
           
-          const q = query(collection(db, 'products'), where('title', '==', pData.title));
-          const querySnap = await getDocs(q);
+          // Buscar por modelo primero si existe, si no por título
+          let existingDocId = null;
+          let existingData = null;
+
+          if (pData.product_model) {
+            const qMod = query(collection(db, 'products'), where('product_model', '==', pData.product_model));
+            const snapMod = await getDocs(qMod);
+            if (!snapMod.empty) {
+              existingDocId = snapMod.docs[0].id;
+              existingData = snapMod.docs[0].data();
+            }
+          }
+
+          if (!existingDocId) {
+            const qTit = query(collection(db, 'products'), where('title', '==', pData.title));
+            const snapTit = await getDocs(qTit);
+            if (!snapTit.empty) {
+              existingDocId = snapTit.docs[0].id;
+              existingData = snapTit.docs[0].data();
+            }
+          }
           
-          if (!querySnap.empty) {
-            // PRODUCTO EXISTENTE: Respetamos la organización manual del administrador
-            const existingData = querySnap.docs[0].data();
+          const cleanData = {
+            ...pData,
+            price: Number(pData.price) || 0,
+            stock: Number(pData.stock) || 0,
+            isFeatured: pData.isFeatured === 'true' || pData.isFeatured === true,
+            updated_at: Timestamp.now()
+          };
+
+          if (existingDocId) {
+            // Si es un CSV, el usuario manda sobre las categorías
+            // Si es un XML, protegemos la manualidad anterior
+            const isFromCSV = file.name.endsWith('.csv');
+            
             const updateData = {
-              ...pData,
-              category: existingData.category || pData.category,
-              type: existingData.type || pData.type,
-              updated_at: Timestamp.now()
+              ...cleanData,
+              // Si viene de CSV, usamos la categoría del CSV. Si no, protegemos la existente.
+              category: isFromCSV ? (pData.category || existingData.category) : (existingData.category || pData.category),
+              subcategory: isFromCSV ? (pData.subcategory || existingData.subcategory) : (existingData.subcategory || pData.subcategory),
+              type: isFromCSV ? (pData.type || existingData.type) : (existingData.type || pData.type)
             };
-            await updateDoc(doc(db, 'products', querySnap.docs[0].id), updateData);
+            await updateDoc(doc(db, 'products', existingDocId), updateData);
             updatedCount++;
           } else {
             await addDoc(collection(db, 'products'), {
@@ -996,9 +1042,10 @@ function AdminContent() {
                   <label 
                     htmlFor="bulk-upload" 
                     className="flex items-center gap-2 px-4 py-2 bg-secondary/10 text-secondary border border-secondary/20 rounded-xl font-bold hover:bg-secondary/20 transition-all cursor-pointer text-sm"
+                    title="Soporta XML, CSV y JSON"
                   >
                     <span className="material-symbols-outlined text-[18px]">upload_file</span>
-                    Carga Masiva
+                    Importar Excel / XML
                   </label>
                   <button 
                     onClick={() => {
