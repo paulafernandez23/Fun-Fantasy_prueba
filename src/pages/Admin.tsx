@@ -122,7 +122,7 @@ function AdminContent() {
     getDocs(query(collection(db, 'contact_messages'), orderBy('timestamp', 'desc')))
       .then(snap => setAllMessages(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
 
-    // Cargar categor├¡as
+    // Cargar categorías
     getDocs(collection(db, 'categories'))
       .then(snap => setAllCategories(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
 
@@ -139,7 +139,7 @@ function AdminContent() {
     loadData();
   }, []);
 
-  // Recargar cuando se accede a la pesta├▒a de citas o usuarios
+  // Recargar cuando se accede a la pestaña de citas o usuarios
   useEffect(() => {
     if (activeTab === 'citas') {
       setAppointmentsLoading(true);
@@ -349,7 +349,7 @@ function AdminContent() {
       setNewsletterContent('');
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
-      showAlert('├ëxito', 'Newsletter enviada con ├®xito.');
+      showAlert('Éxito', 'Newsletter enviada con éxito.');
     } catch (error) {
       console.error('Error enviando newsletter:', error);
       showAlert('Error', 'Error enviando newsletter.');
@@ -451,7 +451,7 @@ function AdminContent() {
       setEditingProductId(null);
       setNewProduct({ title: '', category: '', subcategory: '', price: '', stock: '', type: 'cartas', description: '', tags: '', expansion: '', image_url: '', isFeatured: false, sizes: { S: 0, M: 0, L: 0, XL: 0, XXL: 0 } as Record<string, number> });
       setNewImage(null);
-      showAlert('├ëxito', 'Producto guardado correctamente.');
+      showAlert('Éxito', 'Producto guardado correctamente.');
     } catch (error: any) {
       console.error(error);
       showAlert('Error', error.message || 'Hubo un error al guardar el producto.');
@@ -496,7 +496,7 @@ function AdminContent() {
       setEditingNewsId(null);
       setNewNews({ title: '', excerpt: '', content: '', category: 'General', image_url: '', author: 'Administrador' });
       setNewsImage(null);
-      showAlert('├ëxito', 'Noticia guardada con ├®xito.');
+      showAlert('Éxito', 'Noticia guardada con éxito.');
     } catch (error: any) {
       console.error(error);
       showAlert('Error', 'Hubo un error al guardar la noticia.');
@@ -751,8 +751,8 @@ function AdminContent() {
                 <div className="flex-grow">
                   <p className="font-bold text-on-surface">
                     {lowStockProducts.length === 1
-                      ? '1 producto con stock cr├¡tico'
-                      : `${lowStockProducts.length} productos con stock cr├¡tico`}
+                      ? '1 producto con stock crítico'
+                      : `${lowStockProducts.length} productos con stock crítico`}
                   </p>
                   <p className="text-sm text-on-surface-variant">Revisa el inventario para evitar roturas de stock.</p>
                 </div>
@@ -768,9 +768,9 @@ function AdminContent() {
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               {[
-                { label: 'Ventas Totales', value: `${storeSymbol}${allOrders.length > 0 ? totalSales.toLocaleString() : '0'}`, icon: 'payments', trend: 'Total Hist├│rico' },
+                { label: 'Ventas Totales', value: `${storeSymbol}${allOrders.length > 0 ? totalSales.toLocaleString() : '0'}`, icon: 'payments', trend: 'Total Histórico' },
                 { label: 'Pedidos Hoy', value: ordersToday.length.toString(), icon: 'shopping_bag', trend: `+${ordersToday.length}` },
-                { label: 'Usuarios Club', value: uniqueCustomerEmails.size.toString(), icon: 'group', trend: '├Ünicos' },
+                { label: 'Usuarios Club', value: uniqueCustomerEmails.size.toString(), icon: 'group', trend: 'Únicos' },
                 { label: 'Productos', value: allProducts.length.toString(), icon: 'inventory_2', trend: 'Activos' },
               ].map((stat, i) => (
                 <div key={i} className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/20 shadow-sm">
@@ -789,11 +789,11 @@ function AdminContent() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-              {/* Gr├ífica de Ventas (SVG Custom) */}
+              {/* Gráfica de Ventas (SVG Custom) */}
               <div className="lg:col-span-2 bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/20 shadow-sm">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="font-bold text-lg">Evoluci├│n de Ventas</h2>
-                  <span className="text-xs text-on-surface-variant">├Ültimos 7 d├¡as</span>
+                  <h2 className="font-bold text-lg">Evolución de Ventas</h2>
+                  <span className="text-xs text-on-surface-variant">Últimos 7 días</span>
                 </div>
                 <div className="h-64 flex items-end justify-between gap-4 pt-4">
                   {salesHistory.map((day, i) => (
@@ -814,7 +814,7 @@ function AdminContent() {
                 </div>
               </div>
 
-              {/* Agenda del d├¡a */}
+              {/* Agenda del día */}
               <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden flex flex-col">
                 <div className="p-6 border-b border-outline-variant/20 flex justify-between items-center shrink-0">
                   <div>
@@ -849,7 +849,7 @@ function AdminContent() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              {/* Productos m├ís vendidos */}
+              {/* Productos más vendidos */}
               <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/20 shadow-sm">
                 <div className="flex items-center gap-2 mb-6">
                   <span className="material-symbols-outlined text-primary">analytics</span>
@@ -877,11 +877,11 @@ function AdminContent() {
                 </div>
               </div>
 
-              {/* Distribuci├│n por Categor├¡as */}
+              {/* Distribución por Categorías */}
               <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/20 shadow-sm">
                 <div className="flex items-center gap-2 mb-6">
                   <span className="material-symbols-outlined text-secondary">pie_chart</span>
-                  <h2 className="font-bold text-lg">Inventario por Categor├¡a</h2>
+                  <h2 className="font-bold text-lg">Inventario por Categoría</h2>
                 </div>
                 <div className="space-y-4">
                   {categoryStats.map(([cat, count], i) => (
@@ -1018,7 +1018,7 @@ function AdminContent() {
             
             {showAddProduct && (
               <div className="p-6 border-b border-outline-variant/20 bg-surface-container-high">
-                <h3 className="font-bold mb-4">{editingProductId ? 'Editar Producto' : 'A├▒adir Nuevo Producto'}</h3>
+                <h3 className="font-bold mb-4">{editingProductId ? 'Editar Producto' : 'Añadir Nuevo Producto'}</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2 grid grid-cols-2 gap-4">
                     <div className="space-y-1">
@@ -2004,7 +2004,7 @@ function AdminContent() {
                   <div className="border-t border-outline-variant/20 pt-4 space-y-4">
                     <p className="text-xs font-black uppercase tracking-widest text-primary">Banner de noticias</p>
                     <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">T├¡tulo del banner</label>
+                      <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Título del banner</label>
                       <input
                         type="text"
                         value={homeData.newsTitle ?? ''}
@@ -2013,7 +2013,7 @@ function AdminContent() {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Descripci├│n del banner</label>
+                      <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Descripción del banner</label>
                       <textarea
                         value={homeData.newsDescription ?? ''}
                         onChange={e => updateLocalField('home', 'newsDescription', e.target.value)}
@@ -2022,7 +2022,7 @@ function AdminContent() {
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1.5">
-                        <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Texto del bot├│n</label>
+                        <label className="block text-[10px] font-bold uppercase text-on-surface-variant ml-1">Texto del botón</label>
                         <input
                           type="text"
                           value={homeData.newsButtonText ?? ''}
@@ -2051,7 +2051,7 @@ function AdminContent() {
                     <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                       <span className="material-symbols-outlined">contact_support</span>
                     </div>
-                    P├ígina de Contacto
+                    Página de Contacto
                   </h3>
                   <button
                     onClick={() => handleSaveContent('contacto')}
@@ -2064,8 +2064,8 @@ function AdminContent() {
                 </div>
                 <div className="p-6 space-y-5 flex-grow">
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-black uppercase tracking-widest text-primary ml-1">T├¡tulo de la p├ígina</label>
-                    <p className="text-[10px] text-on-surface-variant ml-1 mb-1">El t├¡tulo grande que ven los visitantes al entrar en Contacto.</p>
+                    <label className="block text-xs font-black uppercase tracking-widest text-primary ml-1">Título de la página</label>
+                    <p className="text-[10px] text-on-surface-variant ml-1 mb-1">El título grande que ven los visitantes al entrar en Contacto.</p>
                     <input
                       type="text"
                       value={contactData.title ?? ''}
@@ -2448,7 +2448,7 @@ export default function Admin() {
               <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-surface-container-lowest border border-outline-variant/50 focus:ring-2 focus:ring-primary outline-none transition-all" />
             </div>
             <div>
-              <label className="block text-xs font-bold uppercase mb-1 ml-1 text-on-surface-variant">Contrase├▒a</label>
+              <label className="block text-xs font-bold uppercase mb-1 ml-1 text-on-surface-variant">Contraseña</label>
               <input type="password" required value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-surface-container-lowest border border-outline-variant/50 focus:ring-2 focus:ring-primary outline-none transition-all" />
             </div>
           </div>
@@ -2458,7 +2458,7 @@ export default function Admin() {
           </button>
           
           <div className="mt-6 text-center">
-             <Link to="/" className="text-sm font-bold text-primary hover:underline">Volver a la tienda p├║blica</Link>
+             <Link to="/" className="text-sm font-bold text-primary hover:underline">Volver a la tienda pública</Link>
           </div>
         </form>
       </div>
