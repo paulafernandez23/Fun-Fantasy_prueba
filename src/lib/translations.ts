@@ -99,7 +99,7 @@ export const translations = {
       followUs: 'Síguenos',
       privacy: 'Política de Privacidad',
       terms: 'Términos de Venta',
-      shipping: 'Envíos y Devoluciones',
+      shipping: 'Política de Envíos',
       returns: 'Devoluciones y Reembolso',
       legal: 'Aviso Legal',
       rights: 'Todos los derechos reservados.'
@@ -194,7 +194,7 @@ export const translations = {
       followUs: 'Follow Us',
       privacy: 'Privacy Policy',
       terms: 'Terms of Sale',
-      shipping: 'Shipping and Returns Policy',
+      shipping: 'Shipping Policy',
       returns: 'Returns and Refund Policy',
       legal: 'Legal Notice',
       rights: 'All rights reserved.'
