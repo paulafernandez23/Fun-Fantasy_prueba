@@ -16,14 +16,7 @@ export default function AdminRoute({ children }: AdminRouteProps) {
     return null;
   }
 
-  // Solo redirigimos si el usuario ESTÁ autenticado pero NO es administrador.
-  // Si no está autenticado, permitimos que entre para que Admin.tsx muestre el formulario de login.
-  const user = useAuthStore(state => state.user);
-
-  if (user && !isAdmin) {
-    return <Navigate to="/" replace />;
-  }
-
-  // Si es admin, renderizamos la ruta (el panel)
+  // Dejamos pasar siempre. Admin.tsx internamente manejará si muestra el login,
+  // el mensaje de "Acceso Denegado" o el panel completo según el rol.
   return <>{children}</>;
 }

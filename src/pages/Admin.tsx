@@ -2603,6 +2603,8 @@ export default function Admin() {
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-surface-container-lowest text-primary"><span className="material-symbols-outlined animate-spin text-4xl">progress_activity</span></div>;
 
+  const isAdmin = useAuthStore(state => state.isAdmin);
+
   if (!session) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-surface-container-lowest p-4">
@@ -2635,6 +2637,34 @@ export default function Admin() {
              <Link to="/" className="text-sm font-bold text-primary hover:underline">Volver a la tienda pública</Link>
           </div>
         </form>
+      </div>
+    );
+  }
+
+  // Si está autenticado pero no es admin
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-surface-container-lowest p-4">
+        <div className="bg-surface-container p-8 rounded-3xl w-full max-w-md border border-outline-variant/30 shadow-2xl text-center">
+          <div className="w-20 h-20 bg-error/10 text-error rounded-full flex items-center justify-center mx-auto mb-6">
+            <span className="material-symbols-outlined text-4xl">block</span>
+          </div>
+          <h2 className="font-bold text-2xl mb-2 text-on-surface">Acceso Denegado</h2>
+          <p className="text-on-surface-variant mb-8 text-sm">
+            Tu cuenta ({session.email}) no tiene permisos de administrador.
+          </p>
+          <div className="flex flex-col gap-3">
+            <button 
+              onClick={() => signOut(auth)} 
+              className="w-full py-3 bg-error text-white font-bold rounded-xl hover:bg-error/90 transition-all"
+            >
+              Cerrar Sesión para cambiar de cuenta
+            </button>
+            <Link to="/" className="text-sm font-bold text-primary hover:underline py-2">
+              Volver a la tienda
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
