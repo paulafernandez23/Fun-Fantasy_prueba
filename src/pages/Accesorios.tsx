@@ -23,9 +23,12 @@ export default function Accesorios() {
       setLoading(true);
       try {
         // Fetch products
-        const pq = query(collection(db, 'products'), where('type', '==', 'accesorios'), where('category', '!=', 'SIN CATEGORÍA'));
+        const pq = query(collection(db, 'products'), where('type', '==', 'accesorios'));
         const pSnap = await getDocs(pq);
-        setAllItems(pSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const accessoriesData = pSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Filtramos 'SIN CATEGORÍA' en el cliente para evitar requisitos de índices compuestos en Firestore
+        setAllItems(accessoriesData.filter((c: any) => c.category !== 'SIN CATEGORÍA'));
 
         // Fetch categories for this section
         const cSnap = await getDocs(collection(db, 'categories'));

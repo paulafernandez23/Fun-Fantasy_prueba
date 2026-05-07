@@ -26,9 +26,12 @@ export default function Cartas() {
       setLoading(true);
       try {
         // Fetch products of type 'cartas'
-        const pq = query(collection(db, 'products'), where('type', '==', 'cartas'), where('category', '!=', 'SIN CATEGORÍA'));
+        const pq = query(collection(db, 'products'), where('type', '==', 'cartas'));
         const pSnap = await getDocs(pq);
-        setAllCards(pSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const cardsData = pSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Filtramos 'SIN CATEGORÍA' en el cliente para evitar requisitos de índices compuestos en Firestore
+        setAllCards(cardsData.filter((c: any) => c.category !== 'SIN CATEGORÍA'));
 
         // Fetch categories for this section
         const cSnap = await getDocs(collection(db, 'categories'));
