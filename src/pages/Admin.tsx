@@ -1866,6 +1866,7 @@ function AdminContent() {
             ) : (
               <div className="flex-grow overflow-auto p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
                     { id: 'aviso-legal', title: 'Aviso Legal', icon: 'gavel' },
                     { id: 'politica-privacidad', title: 'Política de Privacidad', icon: 'policy' },
                     { id: 'politica-cookies', title: 'Política de Cookies', icon: 'cookie' },
