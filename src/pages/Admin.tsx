@@ -12,6 +12,7 @@ import { getAllSubscribers, type NewsletterSubscriber, unsubscribeFromNewsletter
 import { getAllLoyaltyUsers, addPoints, type LoyaltyAccount, getLoyaltyConfig, updateLoyaltyConfig, type LoyaltyConfig, deleteLoyaltyAccount } from '../lib/chatbot/loyaltyService';
 import { sendNewsletterEmail } from '../lib/emailService';
 import { sanitizeObject, sanitizeString } from '../lib/sanitizer';
+import { useAuthStore } from '../store/authStore';
 
 function AdminContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
