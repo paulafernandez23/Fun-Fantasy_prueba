@@ -5,6 +5,17 @@ const nodemailer = require("nodemailer");
 admin.initializeApp();
 
 /**
+ * Sanitización básica para prevenir XSS en los datos procesados por funciones.
+ */
+function sanitize(text) {
+  if (typeof text !== "string") return text;
+  return text
+    .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "")
+    .replace(/on\w+="[^"]*"/gim, "")
+    .replace(/javascript:[^"']*/gim, "#");
+}
+
+/**
  * Cloud Function que se activa cuando se crea un nuevo documento en la colección 'mail'.
  * Utiliza nodemailer para enviar el correo a través del servidor SMTP configurado.
  */
@@ -39,8 +50,8 @@ exports.processQueue = functions
     const mailOptions = {
       from: '"Fun Fantasy" <soporte@esfantasia.es>',
       to: emailData.to,
-      subject: emailData.message.subject,
-      html: emailData.message.html,
+      subject: sanitize(emailData.message.subject),
+      html: sanitize(emailData.message.html),
     };
 
     try {
@@ -170,3 +181,45 @@ exports.serveImage = functions.https.onRequest(async (req, res) => {
     res.status(500).send("Error interno");
   }
 });
+
+/**
+ * Cloud Function para sincronizar el rol 'admin' del documento del usuario
+ * con los Custom Claims de Firebase Auth.
+ * Se ejecuta al crear o actualizar un documento en la colección 'users'.
+ */
+exports.syncAdminClaim = functions.firestore
+  .document('users/{userId}')
+  .onWrite(async (change, context) => {
+    const userId = context.params.userId;
+    const data = change.after.data();
+
+    // Si el documento se borró, no hacemos nada (Auth se borra por separado)
+    if (!data) return null;
+
+    const isAdmin = data.role === 'admin';
+
+    try {
+      // Obtenemos el usuario de Auth para ver sus claims actuales
+      const userRecord = await admin.auth().getUser(userId);
+      const currentClaims = userRecord.customClaims || {};
+
+      // Si el claim ya coincide con la DB, no hacemos la petición (ahorra ciclos)
+      if (currentClaims.admin === isAdmin) {
+        return null;
+      }
+
+      // Asignamos el claim 'admin' (true o falso/undefined)
+      if (isAdmin) {
+        await admin.auth().setCustomUserClaims(userId, { ...currentClaims, admin: true });
+        console.log(`Rol admin ASIGNADO a: ${userId}`);
+      } else {
+        // Para revocar el acceso, seteamos admin a false en lugar de eliminarlo completamente
+        await admin.auth().setCustomUserClaims(userId, { ...currentClaims, admin: false });
+        console.log(`Rol admin REVOCADO a: ${userId}`);
+      }
+      return null;
+    } catch (error) {
+      console.error(`Error sincronizando claim para ${userId}:`, error);
+      return null;
+    }
+  });

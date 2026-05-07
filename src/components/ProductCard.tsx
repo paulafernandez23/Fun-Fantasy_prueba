@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCartStore } from '../store/cartStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { getSEOImageUrl } from '../lib/seoUtils';
+import { useProductStock } from '../hooks/useProductStock';
 
 interface ProductCardProps {
   key?: React.Key | string | number;
@@ -10,21 +11,18 @@ interface ProductCardProps {
   showSizes?: boolean;
 }
 
-export default function ProductCard({ product, showSizes = false }: ProductCardProps) {
+export default React.memo(function ProductCard({ product, showSizes = false }: ProductCardProps) {
   const currencySymbol = useSettingsStore(state => state.currencySymbol);
-  const exchangeRate = useSettingsStore(state => state.exchangeRate);
   const addItem = useCartStore(state => state.addItem);
 
-  const [selectedSize, setSelectedSize] = useState<string>('');
-
-  const sizesObj = product.sizes || {};
-  const availableSizes = Object.keys(sizesObj).filter(sz => sizesObj[sz] > 0);
-  const hasSizes = availableSizes.length > 0;
-  const sizeKeysOriginal = Object.keys(sizesObj);
-  const hasNoStockSizes = sizeKeysOriginal.length > 0 && availableSizes.length === 0;
-  const isOutOfStock = hasNoStockSizes || (sizeKeysOriginal.length === 0 && Number(product.stock) <= 0);
-
-  const currentSize = selectedSize || availableSizes[0];
+  const {
+    availableSizes,
+    hasSizes,
+    isOutOfStock,
+    convertedPrice,
+    currentSize,
+    setSelectedSize
+  } = useProductStock(product);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -40,7 +38,7 @@ export default function ProductCard({ product, showSizes = false }: ProductCardP
     });
   };
 
-  const convertedPrice = (Number(product.price) * exchangeRate).toFixed(2);
+
 
   return (
     <div className="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-outline-variant/20 group flex flex-col h-full">
@@ -111,4 +109,4 @@ export default function ProductCard({ product, showSizes = false }: ProductCardP
       </div>
     </div>
   );
-}
+});

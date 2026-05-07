@@ -8,6 +8,7 @@ import { useAuthStore } from '../store/authStore';
 import { translations } from '../lib/translations';
 import { getLoyaltyByEmail, addPoints, LoyaltyAccount, getLoyaltyConfig, LoyaltyConfig, DEFAULT_LOYALTY_CONFIG } from '../lib/chatbot/loyaltyService';
 import { getSEOImageUrl } from '../lib/seoUtils';
+import { sanitizeObject } from '../lib/sanitizer';
 
 export default function Carrito() {
   const currencySymbol = useSettingsStore(state => state.currencySymbol);
@@ -144,6 +145,8 @@ export default function Carrito() {
     setIsProcessing(true);
     
     try {
+      const sanitizedShipping = sanitizeObject(shippingDetails);
+
       await addDoc(collection(db, 'orders'), {
         items: items.map(i => ({
           id: i.id,
@@ -152,7 +155,7 @@ export default function Carrito() {
           price: i.price,
           selectedSize: i.selectedSize || null
         })),
-        shipping_details: shippingDetails,
+        shipping_details: sanitizedShipping,
         total: (total + shippingCost - discountInBaseCurrency),
         currency: currencySymbol,
         payment_method: paymentMethod,

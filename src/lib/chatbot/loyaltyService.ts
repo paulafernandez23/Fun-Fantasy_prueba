@@ -1,17 +1,5 @@
-import { db } from '../firebase';
-import { 
-  collection, 
-  query, 
-  where, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  doc, 
-  Timestamp, 
-  setDoc,
-  getDoc,
-  deleteDoc
-} from 'firebase/firestore';
+import { getDocument, queryDocuments, setDocument, removeDocument, updateDocument, invalidateCache } from '../db/firestoreService';
+import { Timestamp, where } from 'firebase/firestore';
 
 export interface LoyaltyAccount {
   email: string;
@@ -46,26 +34,16 @@ export async function getLoyaltyByEmail(email: string): Promise<LoyaltyAccount |
   
   try {
     // 1. Intentar por ID de documento (más rápido)
-    const docRef = doc(db, 'loyalty', normalizedEmail);
-    const docSnap = await getDoc(docRef);
-    
-    if (docSnap.exists()) {
-      return docSnap.data() as LoyaltyAccount;
-    }
+    const loyalty = await getDocument<LoyaltyAccount>('loyalty', normalizedEmail);
+    if (loyalty) return loyalty;
 
     // 2. Backup: Buscar por el campo 'email' por si el ID no es el email (casos antiguos)
-    const q = query(collection(db, 'loyalty'), where('email', '==', normalizedEmail));
-    const querySnap = await getDocs(q);
-    if (!querySnap.empty) {
-      return querySnap.docs[0].data() as LoyaltyAccount;
-    }
+    const byEmail = await queryDocuments<LoyaltyAccount>('loyalty', [where('email', '==', normalizedEmail)]);
+    if (byEmail.length > 0) return byEmail[0];
     
     // 3. Segundo Backup: Por si acaso se guardó el email en el campo 'name' por error
-    const q2 = query(collection(db, 'loyalty'), where('name', '==', normalizedEmail));
-    const querySnap2 = await getDocs(q2);
-    if (!querySnap2.empty) {
-      return querySnap2.docs[0].data() as LoyaltyAccount;
-    }
+    const byName = await queryDocuments<LoyaltyAccount>('loyalty', [where('name', '==', normalizedEmail)]);
+    if (byName.length > 0) return byName[0];
   } catch (error) {
     console.error("Error fetching loyalty account:", error);
   }
@@ -89,12 +67,12 @@ export async function createLoyaltyAccount(name: string, email: string): Promise
     lastActivity: Timestamp.now()
   };
   
-  await setDoc(doc(db, 'loyalty', normalizedEmail), loyaltyData);
+  await setDocument('loyalty', normalizedEmail, loyaltyData);
 }
 
 export async function deleteLoyaltyAccount(email: string): Promise<void> {
   const normalizedEmail = email.toLowerCase().trim();
-  await deleteDoc(doc(db, 'loyalty', normalizedEmail));
+  await removeDocument('loyalty', normalizedEmail);
 }
 
 export async function addPoints(email: string, pointsToAdd: number): Promise<void> {
@@ -105,7 +83,7 @@ export async function addPoints(email: string, pointsToAdd: number): Promise<voi
   const newLevel = getLevelInfo(newPoints).current.name;
   
   const normalizedEmail = email.toLowerCase().trim();
-  await updateDoc(doc(db, 'loyalty', normalizedEmail), {
+  await updateDocument('loyalty', normalizedEmail, {
     points: newPoints,
     level: newLevel,
     lastActivity: Timestamp.now()
@@ -113,8 +91,7 @@ export async function addPoints(email: string, pointsToAdd: number): Promise<voi
 }
 
 export async function getAllLoyaltyUsers(): Promise<LoyaltyAccount[]> {
-  const snapshot = await getDocs(collection(db, 'loyalty'));
-  return snapshot.docs.map(doc => doc.data() as LoyaltyAccount);
+  return queryDocuments<LoyaltyAccount>('loyalty');
 }
 
 // Loyalty Configuration
@@ -131,16 +108,17 @@ export const DEFAULT_LOYALTY_CONFIG: LoyaltyConfig = {
 };
 
 export async function getLoyaltyConfig(): Promise<LoyaltyConfig> {
-  const configDoc = doc(db, 'app_settings', 'loyalty');
-  const snap = await getDoc(configDoc);
+  const cacheKey = 'loyalty_config';
+  const config = await getDocument<LoyaltyConfig>('app_settings', 'loyalty', { key: cacheKey, ttlMs: 60 * 60 * 1000 });
   
-  if (snap.exists()) {
-    return snap.data() as LoyaltyConfig;
+  if (config) {
+    return config;
   }
   
   // Inicializar con valores por defecto si no existe
   try {
-    await setDoc(configDoc, DEFAULT_LOYALTY_CONFIG);
+    await setDocument('app_settings', 'loyalty', DEFAULT_LOYALTY_CONFIG);
+    invalidateCache(cacheKey);
   } catch (error) {
     console.error('Error al inicializar config de lealtad:', error);
   }
@@ -148,6 +126,6 @@ export async function getLoyaltyConfig(): Promise<LoyaltyConfig> {
 }
 
 export async function updateLoyaltyConfig(config: LoyaltyConfig): Promise<void> {
-  const configDoc = doc(db, 'app_settings', 'loyalty');
-  await setDoc(configDoc, config);
+  await setDocument('app_settings', 'loyalty', config);
+  invalidateCache('loyalty_config');
 }

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { calculateCartTotal, validateCartItem } from '../lib/cartService';
 
 export interface CartItem {
   cartItemId: string; // UUID of the item configuration in the cart
@@ -25,15 +26,19 @@ export const useCartStore = create<CartStore>()(
     (set, get) => ({
       items: [],
       addItem: (item) => {
+        if (!validateCartItem(item)) return;
         set((state) => {
-          const existingItem = state.items.find((i) => i.cartItemId === item.cartItemId);
-          if (existingItem) {
-            return {
-              items: state.items.map((i) =>
-                i.cartItemId === item.cartItemId ? { ...i, quantity: i.quantity + item.quantity } : i
-              ),
+          const existingItemIndex = state.items.findIndex((i) => i.cartItemId === item.cartItemId);
+          if (existingItemIndex !== -1) {
+            // Immutable atomic update for existing item
+            const newItems = [...state.items];
+            newItems[existingItemIndex] = {
+              ...newItems[existingItemIndex],
+              quantity: newItems[existingItemIndex].quantity + item.quantity
             };
+            return { items: newItems };
           }
+          // Immutable atomic append for new item
           return { items: [...state.items, item] };
         });
       },
@@ -51,8 +56,7 @@ export const useCartStore = create<CartStore>()(
       },
       clearCart: () => set({ items: [] }),
       getTotal: () => {
-        const { items } = get();
-        return items.reduce((total, item) => total + item.price * item.quantity, 0);
+        return calculateCartTotal(get().items);
       },
     }),
     {

@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { db } from '../lib/firebase';
-import { doc, getDoc, collection, query, where, limit, getDocs } from 'firebase/firestore';
 import { useCartStore } from '../store/cartStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { translations } from '../lib/translations';
-import { getSEOImageUrl, updateMetaTags } from '../lib/seoUtils';
+import { getSEOImageUrl } from '../lib/seoUtils';
+import { useProductDetail } from '../hooks/useProductDetail';
+import { useProductStock } from '../hooks/useProductStock';
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -16,72 +16,24 @@ export default function ProductDetail() {
   const exchangeRate = useSettingsStore(state => state.exchangeRate);
   const addItem = useCartStore(state => state.addItem);
 
-  const [product, setProduct] = useState<any>(null);
-  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { product, relatedProducts, loading } = useProductDetail(id);
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState('');
   const [showLightbox, setShowLightbox] = useState(false);
-  const [selectedSize, setSelectedSize] = useState<string>('');
+
+  const { availableSizes, hasSizes, isOutOfStock, convertedPrice, currentSize, setSelectedSize, selectedSize } = useProductStock(product);
 
   useEffect(() => {
-    if (!id) return;
+    if (product?.image_url) {
+      setActiveImage(product.image_url);
+    }
+  }, [product]);
 
-    const fetchProduct = async () => {
-      setLoading(true);
-      try {
-        const docRef = doc(db, 'products', id);
-        const docSnap = await getDoc(docRef);
 
-        if (docSnap.exists()) {
-          const data = { id: docSnap.id, ...docSnap.data() } as any;
-          
-          if (data.category === 'SIN CATEGORÍA') {
-            setProduct(null);
-            setLoading(false);
-            return;
-          }
-
-          setProduct(data);
-          setActiveImage(data.image_url);
-
-          // Actualizar SEO
-          updateMetaTags({
-            title: `${data.title} | Final Fantasy Store`,
-            description: data.description?.substring(0, 160) || `Compra ${data.title} en nuestra tienda especializada de Final Fantasy.`,
-            image: getSEOImageUrl(data.image_url)
-          });
-          
-          // Fetch related products
-          const q = query(
-            collection(db, 'products'),
-            where('category', '==', data.category),
-            where('__name__', '!=', id),
-            limit(4)
-          );
-          const relatedSnap = await getDocs(q);
-          setRelatedProducts(relatedSnap.docs.map(d => ({ id: d.id, ...d.data() })));
-        } else {
-          setProduct(null);
-        }
-      } catch (error) {
-        console.error('Error fetching product:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProduct();
-    window.scrollTo(0, 0);
-  }, [id]);
 
   const handleAddToCart = () => {
     if (product) {
-      const sizesObj = product.sizes || {};
-      const availableSizes = Object.keys(sizesObj).filter(sz => sizesObj[sz] > 0);
-      const currentSize = selectedSize || (availableSizes.length > 0 ? availableSizes[0] : undefined);
-
-      if (availableSizes.length > 0 && !currentSize) {
+      if (hasSizes && !currentSize) {
         // If there are sizes but none is selected (edge case), do nothing or could show an error
         return;
       }
@@ -121,10 +73,7 @@ export default function ProductDetail() {
     );
   }
 
-  const convertedPrice = (Number(product.price) * exchangeRate).toFixed(2);
-  const sizesObj = product.sizes || {};
-  const availableSizes = Object.keys(sizesObj).filter(sz => sizesObj[sz] > 0);
-  const isOutOfStock = (Object.keys(sizesObj).length > 0 && availableSizes.length === 0) || (Object.keys(sizesObj).length === 0 && Number(product.stock) <= 0);
+
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -318,7 +267,7 @@ export default function ProductDetail() {
                 <div className="p-4 flex flex-col">
                   <h3 className="font-headline font-bold text-lg mb-1 truncate">{rel.title}</h3>
                   <div className="flex items-center justify-between mt-auto">
-                    <span className="font-bold text-lg text-primary">{currencySymbol}{(Number(rel.price) * exchangeRate).toFixed(2)}</span>
+                    <span className="font-bold text-lg text-primary">{currencySymbol}{(Number(rel.price) * useSettingsStore.getState().exchangeRate).toFixed(2)}</span>
                     <button className="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center hover:bg-primary hover:text-on-primary transition-colors">
                       <span className="material-symbols-outlined text-sm">add_shopping_cart</span>
                     </button>

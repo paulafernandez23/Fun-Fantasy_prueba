@@ -34,7 +34,11 @@ interface ChatStore {
   clearChat: () => void;
 }
 
-function generateId(): string {
+// Utility to generate IDs (could be moved to a shared utils file)
+function generateMessageId(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
@@ -54,7 +58,7 @@ export const useChatStore = create<ChatStore>((set) => ({
     set((state) => ({
       messages: [
         ...state.messages,
-        { id: generateId(), role: 'user', text, timestamp: new Date(), imageUrl },
+        { id: generateMessageId(), role: 'user', text, timestamp: new Date(), imageUrl },
       ],
     })),
 
@@ -62,7 +66,7 @@ export const useChatStore = create<ChatStore>((set) => ({
     set((state) => ({
       messages: [
         ...state.messages,
-        { id: generateId(), role: 'bot', text, timestamp: new Date() },
+        { id: generateMessageId(), role: 'bot', text, timestamp: new Date() },
       ],
     })),
 

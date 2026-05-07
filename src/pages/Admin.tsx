@@ -11,6 +11,7 @@ import { getAppointments, updateAppointmentStatus, formatDate, type Appointment 
 import { getAllSubscribers, type NewsletterSubscriber, unsubscribeFromNewsletter } from '../lib/chatbot/newsletterService';
 import { getAllLoyaltyUsers, addPoints, type LoyaltyAccount, getLoyaltyConfig, updateLoyaltyConfig, type LoyaltyConfig, deleteLoyaltyAccount } from '../lib/chatbot/loyaltyService';
 import { sendNewsletterEmail } from '../lib/emailService';
+import { sanitizeObject, sanitizeString } from '../lib/sanitizer';
 
 function AdminContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -424,7 +425,7 @@ function AdminContent() {
         ? (Object.values(newProduct.sizes) as number[]).reduce((sum, val) => sum + val, 0)
         : parseInt(newProduct.stock, 10) || 0;
 
-      const payload = {
+      const payload = sanitizeObject({
         title: newProduct.title || 'Producto sin nombre',
         category: newProduct.category || 'SIN CATEGORÍA',
         price: parseFloat(newProduct.price) || 0,
@@ -439,7 +440,7 @@ function AdminContent() {
         subcategory: newProduct.subcategory || '',
         description_manually_edited: true,
         category_manually_edited: true
-      };
+      });
 
       if (editingProductId) {
         await updateDoc(doc(db, 'products', editingProductId), payload);
@@ -475,7 +476,7 @@ function AdminContent() {
         finalImageUrl = await getDownloadURL(storageRef);
       }
 
-      const newsData = {
+      const newsData = sanitizeObject({
         title: newNews.title,
         excerpt: newNews.excerpt,
         content: newNews.content,
@@ -484,7 +485,7 @@ function AdminContent() {
         published_at: Timestamp.now(),
         author: 'Fun Fantasy',
         readTime: `${Math.ceil(newNews.content.split(' ').length / 200)} min`
-      };
+      });
 
       if (editingNewsId) {
         await updateDoc(doc(db, 'news', editingNewsId), newsData);
@@ -526,11 +527,11 @@ function AdminContent() {
     if (!newCategory.name) return;
     setIsSaving(true);
     try {
-      const categoryData = {
+      const categoryData = sanitizeObject({
         name: newCategory.name,
         section: newCategory.section || 'merchandising',
         subcategories: (newCategory.subcategories || '').split(',').map(s => s.trim()).filter(s => s !== '')
-      };
+      });
 
       if (editingCategory) {
         await updateDoc(doc(db, 'categories', editingCategory.id), categoryData);
@@ -796,7 +797,7 @@ function AdminContent() {
     setIsSaving(true);
     console.log(`Guardando contenido para ${pageId}...`, localCMS[pageId]);
     try {
-      const data = localCMS[pageId] || {};
+      const data = sanitizeObject(localCMS[pageId] || {});
       const docRef = doc(db, 'site_content', pageId);
       await setDoc(docRef, data, { merge: true });
       

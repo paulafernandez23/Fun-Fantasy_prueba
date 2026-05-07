@@ -6,6 +6,7 @@ import { addDoc, collection, Timestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { updateMetaTags } from '../lib/seoUtils';
 import { sendContactNotification } from '../lib/emailService';
+import { sanitizeObject } from '../lib/sanitizer';
 
 export default function Contacto() {
   const isDarkMode = useSettingsStore(state => state.isDarkMode);
@@ -56,9 +57,11 @@ export default function Contacto() {
     }
     
     try {
+      const sanitizedData = sanitizeObject(formData);
+
       // 1. Guardar mensaje en Firestore
       await addDoc(collection(db, 'contact_messages'), {
-        ...formData,
+        ...sanitizedData,
         timestamp: new Date().toISOString(),
         read: false,
         consentGiven: true,
@@ -68,9 +71,9 @@ export default function Contacto() {
       // 2. Notificar al administrador por email
       try {
         await sendContactNotification({
-          name: `${formData.name} ${formData.lastName}`,
-          email: formData.email,
-          message: formData.message
+          name: `${sanitizedData.name} ${sanitizedData.lastName}`,
+          email: sanitizedData.email,
+          message: sanitizedData.message
         });
       } catch (emailErr) {
         console.error('Error sending email notification:', emailErr);

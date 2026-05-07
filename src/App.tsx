@@ -27,6 +27,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { useAuthStore } from './store/authStore';
 import { getLoyaltyByEmail } from './lib/chatbot/loyaltyService';
 
+import AdminRoute from './components/AdminRoute';
 import DynamicPage from './pages/DynamicPage';
 import FaqPage from './pages/FaqPage';
 import CookieBanner from './components/CookieBanner';
@@ -35,6 +36,8 @@ export default function App() {
   const isDarkMode = useSettingsStore(state => state.isDarkMode);
   const setUser = useAuthStore(state => state.setUser);
   const setAdmin = useAuthStore(state => state.setAdmin);
+  const isInitialized = useAuthStore(state => state.isInitialized);
+  const setInitialized = useAuthStore(state => state.setInitialized);
   
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -42,12 +45,20 @@ export default function App() {
       
       const handleAuthUpdate = async () => {
         if (user) {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          setAdmin(userDoc.data()?.role === 'admin');
-          
-          if (user.email) {
-            const loyalty = await getLoyaltyByEmail(user.email);
-            useAuthStore.getState().setLoyaltyAccount(loyalty);
+          try {
+            // Forzar recarga del token para obtener los claims más recientes
+            const tokenResult = await user.getIdTokenResult(true);
+            const isUserAdmin = !!tokenResult.claims.admin;
+            
+            setAdmin(isUserAdmin);
+            
+            if (user.email) {
+              const loyalty = await getLoyaltyByEmail(user.email);
+              useAuthStore.getState().setLoyaltyAccount(loyalty);
+            }
+          } catch (error) {
+            console.error("Error verificando claims:", error);
+            setAdmin(false);
           }
         } else {
           setAdmin(false);
@@ -55,10 +66,12 @@ export default function App() {
         }
       };
 
-      handleAuthUpdate();
+      handleAuthUpdate().finally(() => {
+        setInitialized(true);
+      });
     });
     return () => unsubscribe();
-  }, [setUser, setAdmin]);
+  }, [setUser, setAdmin, setInitialized]);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -67,6 +80,14 @@ export default function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [isDarkMode]);
+
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface-container-lowest text-primary">
+        <span className="material-symbols-outlined animate-spin text-4xl">progress_activity</span>
+      </div>
+    );
+  }
 
   return (
     <Router>
@@ -80,7 +101,11 @@ export default function App() {
           <Route path="/accesorios" element={<Accesorios />} />
           <Route path="/contacto" element={<Contacto />} />
           <Route path="/carrito" element={<Carrito />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin" element={
+            <AdminRoute>
+              <Admin />
+            </AdminRoute>
+          } />
           <Route path="/producto/:id" element={<ProductDetail />} />
           <Route path="/noticias" element={<Noticias />} />
           <Route path="/noticia/:id" element={<NoticiaDetail />} />

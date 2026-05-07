@@ -1,5 +1,5 @@
-import { db } from '../firebase';
-import { collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
+import { queryDocuments } from '../db/firestoreService';
+import { limit, where } from 'firebase/firestore';
 
 export interface Product {
   id: string;
@@ -20,10 +20,12 @@ export interface Product {
  */
 export async function searchProducts(searchTerm: string): Promise<Product[]> {
   const term = searchTerm.toLowerCase().trim();
-  const snapshot = await getDocs(
-    query(collection(db, 'products'), limit(20))
+  const cacheKey = 'products_limit_20';
+  const all = await queryDocuments<Product>(
+    'products', 
+    [limit(20)],
+    { key: cacheKey, ttlMs: 5 * 60 * 1000 } // 5 minutes cache
   );
-  const all = snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as object) } as Product));
   // Filtrado client-side para búsqueda flexible (Firestore no soporta full-text search)
   return all
     .filter(p =>
@@ -39,14 +41,21 @@ export async function searchProducts(searchTerm: string): Promise<Product[]> {
  * Devuelve los productos más recientes (hasta 4) para mostrar novedades.
  */
 export async function getLatestProducts(productType?: 'cartas' | 'merchandising'): Promise<Product[]> {
-  let q;
+  const cacheKey = productType ? `latest_products_${productType}` : 'latest_products_all';
+  
   if (productType) {
-    q = query(collection(db, 'products'), where('type', '==', productType), limit(4));
+    return queryDocuments<Product>(
+      'products', 
+      [where('type', '==', productType), limit(4)],
+      { key: cacheKey, ttlMs: 5 * 60 * 1000 }
+    );
   } else {
-    q = query(collection(db, 'products'), limit(4));
+    return queryDocuments<Product>(
+      'products', 
+      [limit(4)],
+      { key: cacheKey, ttlMs: 5 * 60 * 1000 }
+    );
   }
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as object) } as Product));
 }
 
 /**

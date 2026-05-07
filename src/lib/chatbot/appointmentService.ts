@@ -1,5 +1,5 @@
-import { db } from '../firebase';
-import { collection, addDoc, getDocs, getDoc, updateDoc, doc, query, orderBy, Timestamp } from 'firebase/firestore';
+import { createDocument, queryDocuments, getDocument, updateDocument } from '../db/firestoreService';
+import { Timestamp, orderBy } from 'firebase/firestore';
 import { sendAppointmentRequestNotification, sendAppointmentStatusNotification } from '../emailService';
 
 export interface Appointment {
@@ -72,7 +72,7 @@ export async function saveAppointment(data: Omit<Appointment, 'id' | 'status' | 
     calendarUrl,
   };
 
-  const ref = await addDoc(collection(db, 'appointments'), payload);
+  const id = await createDocument('appointments', payload);
   
   // Notificar al administrador
   try {
@@ -87,17 +87,14 @@ export async function saveAppointment(data: Omit<Appointment, 'id' | 'status' | 
     console.error('Error enviando notificación de cita al admin:', error);
   }
 
-  return { id: ref.id, ...payload };
+  return { id, ...payload };
 }
 
 /**
  * Obtiene todas las citas ordenadas por fecha de creación descendente.
  */
 export async function getAppointments(): Promise<Appointment[]> {
-  const snapshot = await getDocs(
-    query(collection(db, 'appointments'), orderBy('createdAt', 'desc'))
-  );
-  return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Appointment));
+  return queryDocuments<Appointment>('appointments', [orderBy('createdAt', 'desc')]);
 }
 
 /**
@@ -108,14 +105,11 @@ export async function updateAppointmentStatus(
   status: 'confirmed' | 'rejected'
 ): Promise<void> {
   // 1. Obtener datos de la cita antes de actualizar
-  const apptRef = doc(db, 'appointments', id);
-  const apptSnap = await getDoc(apptRef);
+  const apptData = await getDocument<Appointment>('appointments', id);
   
-  if (apptSnap.exists()) {
-    const apptData = apptSnap.data() as Appointment;
-    
+  if (apptData) {
     // 2. Actualizar estado
-    await updateDoc(apptRef, { status });
+    await updateDocument('appointments', id, { status });
 
     // 3. Notificar al cliente si tiene un email válido
     if (apptData.contact && apptData.contact.includes('@')) {
