@@ -23,7 +23,7 @@ export default function JuegosMesa() {
       setLoading(true);
       try {
         // Fetch products
-        const pq = query(collection(db, 'products'), where('type', '==', 'juegos-de-mesa'));
+        const pq = query(collection(db, 'products'), where('type', '==', 'juegos-de-mesa'), where('category', '!=', 'SIN CATEGORÍA'));
         const pSnap = await getDocs(pq);
         setAllItems(pSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 

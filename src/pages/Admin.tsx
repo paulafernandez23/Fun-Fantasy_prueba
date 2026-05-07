@@ -426,7 +426,7 @@ function AdminContent() {
 
       const payload = {
         title: newProduct.title || 'Producto sin nombre',
-        category: newProduct.category || 'General',
+        category: newProduct.category || 'SIN CATEGORÍA',
         price: parseFloat(newProduct.price) || 0,
         stock: calculatedStock || 0,
         type: newProduct.type || 'cartas',
@@ -436,7 +436,9 @@ function AdminContent() {
         expansion: newProduct.type === 'cartas' ? newProduct.expansion : '',
         isFeatured: newProduct.isFeatured || false,
         sizes: isClothing ? newProduct.sizes : {},
-        subcategory: newProduct.subcategory || ''
+        subcategory: newProduct.subcategory || '',
+        description_manually_edited: true,
+        category_manually_edited: true
       };
 
       if (editingProductId) {
@@ -700,6 +702,16 @@ function AdminContent() {
         let createdCount = 0;
         setUploadProgress({ current: 0, total: products.length });
 
+        // Asegurarse de que existe la categoría "SIN CATEGORÍA"
+        const sinCategoriaExists = allCategories.some(c => c.name.toUpperCase() === "SIN CATEGORÍA");
+        if (!sinCategoriaExists) {
+          await addDoc(collection(db, 'categories'), {
+            name: "SIN CATEGORÍA",
+            section: "merchandising",
+            subcategories: []
+          });
+        }
+
         for (let i = 0; i < products.length; i++) {
           const pData = products[i];
           setUploadProgress({ current: i + 1, total: products.length });
@@ -708,7 +720,7 @@ function AdminContent() {
           
           // Buscar por modelo primero si existe, si no por título
           let existingDocId = null;
-          let existingData = null;
+          let existingData: any = null;
 
           if (pData.product_model) {
             const qMod = query(collection(db, 'products'), where('product_model', '==', pData.product_model));
@@ -728,33 +740,37 @@ function AdminContent() {
             }
           }
           
-          const cleanData = {
-            ...pData,
-            price: Number(pData.price) || 0,
-            stock: Number(pData.stock) || 0,
-            isFeatured: pData.isFeatured === 'true' || pData.isFeatured === true,
-            updated_at: Timestamp.now()
-          };
-
           if (existingDocId) {
-            // Si es un CSV, el usuario manda sobre las categorías
-            // Si es un XML, protegemos la manualidad anterior
-            const isFromCSV = file.name.endsWith('.csv');
+            // PRODUCTO EXISTENTE: Actualizamos solo precio, stock y descripción (si no se ha tocado)
+            // No tocamos categorías, imágenes ni tipo para respetar al admin.
             
-            const updateData = {
-              ...cleanData,
-              // Si viene de CSV, usamos la categoría del CSV. Si no, protegemos la existente.
-              category: isFromCSV ? (pData.category || existingData.category || "") : (existingData.category || pData.category || ""),
-              subcategory: isFromCSV ? (pData.subcategory || existingData.subcategory || "") : (existingData.subcategory || pData.subcategory || ""),
-              type: isFromCSV ? (pData.type || existingData.type || "merchandising") : (existingData.type || pData.type || "merchandising")
+            const updateData: any = {
+              price: Number(pData.price) || 0,
+              stock: Number(pData.stock) || 0,
+              updated_at: Timestamp.now()
             };
+
+            // Solo actualizamos la descripción si NO se ha editado manualmente
+            if (!existingData.description_manually_edited) {
+              updateData.description = pData.description || "";
+            }
+
             await updateDoc(doc(db, 'products', existingDocId), updateData);
             updatedCount++;
           } else {
-            await addDoc(collection(db, 'products'), {
-              ...cleanData,
-              created_at: Timestamp.now()
-            });
+            // PRODUCTO NUEVO: Todos los campos, pero categoría "SIN CATEGORÍA"
+            const newData = {
+              ...pData,
+              category: "SIN CATEGORÍA",
+              subcategory: "",
+              price: Number(pData.price) || 0,
+              stock: Number(pData.stock) || 0,
+              isFeatured: false,
+              created_at: Timestamp.now(),
+              updated_at: Timestamp.now()
+            };
+            
+            await addDoc(collection(db, 'products'), newData);
             createdCount++;
           }
         }

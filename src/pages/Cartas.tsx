@@ -26,7 +26,7 @@ export default function Cartas() {
       setLoading(true);
       try {
         // Fetch products of type 'cartas'
-        const pq = query(collection(db, 'products'), where('type', '==', 'cartas'));
+        const pq = query(collection(db, 'products'), where('type', '==', 'cartas'), where('category', '!=', 'SIN CATEGORÍA'));
         const pSnap = await getDocs(pq);
         setAllCards(pSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 

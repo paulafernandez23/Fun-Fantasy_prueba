@@ -23,7 +23,7 @@ export default function Merchandising() {
       setLoading(true);
       try {
         // Fetch products
-        const pq = query(collection(db, 'products'), where('type', '==', 'merchandising'));
+        const pq = query(collection(db, 'products'), where('type', '==', 'merchandising'), where('category', '!=', 'SIN CATEGORÍA'));
         const pSnap = await getDocs(pq);
         setAllItems(pSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 

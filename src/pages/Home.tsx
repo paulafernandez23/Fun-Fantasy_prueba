@@ -54,12 +54,12 @@ export default function Home() {
       setLoading(true);
       try {
         // Fetch newest products
-        const newestQ = query(collection(db, 'products'), limit(8));
+        const newestQ = query(collection(db, 'products'), where('category', '!=', 'SIN CATEGORÍA'), limit(8));
         const newestSnap = await getDocs(newestQ);
         setProducts(newestSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 
         // Fetch featured products
-        const featuredQ = query(collection(db, 'products'), where('isFeatured', '==', true), limit(4));
+        const featuredQ = query(collection(db, 'products'), where('isFeatured', '==', true), where('category', '!=', 'SIN CATEGORÍA'), limit(4));
         const featuredSnap = await getDocs(featuredQ);
         setFeaturedProducts(featuredSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       } catch (error) {

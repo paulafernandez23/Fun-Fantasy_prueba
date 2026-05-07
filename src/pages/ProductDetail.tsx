@@ -35,6 +35,13 @@ export default function ProductDetail() {
 
         if (docSnap.exists()) {
           const data = { id: docSnap.id, ...docSnap.data() } as any;
+          
+          if (data.category === 'SIN CATEGORÍA') {
+            setProduct(null);
+            setLoading(false);
+            return;
+          }
+
           setProduct(data);
           setActiveImage(data.image_url);
 
