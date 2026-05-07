@@ -48,7 +48,15 @@ export default function App() {
           try {
             // Forzar recarga del token para obtener los claims más recientes
             const tokenResult = await user.getIdTokenResult(true);
-            const isUserAdmin = !!tokenResult.claims.admin;
+            let isUserAdmin = !!tokenResult.claims.admin;
+            
+            // Si no tiene el claim, comprobamos en Firestore como respaldo (más fácil de configurar manualmente)
+            if (!isUserAdmin) {
+              const userDoc = await getDoc(doc(db, 'users', user.uid));
+              if (userDoc.exists() && userDoc.data().isAdmin === true) {
+                isUserAdmin = true;
+              }
+            }
             
             setAdmin(isUserAdmin);
             
