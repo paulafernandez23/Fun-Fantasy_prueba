@@ -19,19 +19,18 @@ export interface ChatMessage {
   parts: [{ text: string }];
 }
 
-/** Instancia singleton de Gemini */
-let genAIInstance: GoogleGenAI | null = null;
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '../firebase';
 
-function getGenAI(): GoogleGenAI {
-  if (!genAIInstance) {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyDD2Q0YVSVlM7WGMDaapYnkTD-bmeIDie4";
-    if (!apiKey) {
-      console.error('Falta la variable de entorno VITE_GEMINI_API_KEY');
-    }
-    genAIInstance = new GoogleGenAI({ apiKey });
-  }
-  return genAIInstance;
+/**
+ * Función que llama al proxy de Gemini en Firebase Functions para mayor seguridad.
+ */
+async function callGeminiProxy(message: string, history: any[], systemPrompt: string): Promise<string> {
+  const chatFn = httpsCallable(functions, 'chat');
+  const result = await chatFn({ message, history, systemPrompt });
+  return (result.data as any).text;
 }
+
 
 // ─── Helpers de detección simples ─────────────────────────────────────────
 
@@ -259,8 +258,6 @@ export async function sendChatMessage(
   imageBase64?: string,
   imageMimeType?: string
 ): Promise<string> {
-  const genAI = getGenAI();
-
   const dynamicContext = await buildDynamicContext(userMessage, cartTotal);
 
   const systemPrompt =
@@ -269,31 +266,9 @@ export async function sendChatMessage(
       ? `\n\n## Contexto en tiempo real de esta consulta\n${dynamicContext}`
       : '');
 
-  // Construir las partes del último mensaje del usuario (texto + imagen opcional)
-  const userParts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
-    { text: userMessage || '(El usuario ha enviado una imagen de una carta)' },
-  ];
+  // Llamada al proxy seguro (Backend)
+  const text = await callGeminiProxy(userMessage, history, systemPrompt);
 
-  if (imageBase64 && imageMimeType) {
-    userParts.push({ inlineData: { mimeType: imageMimeType, data: imageBase64 } });
-  }
-
-  const contents = [
-    ...history,
-    { role: 'user' as const, parts: userParts },
-  ];
-
-  const response = await genAI.models.generateContent({
-    model: 'gemini-flash-latest',
-    contents,
-    config: {
-      systemInstruction: systemPrompt,
-      temperature: 0.7,
-      maxOutputTokens: 2048,
-    },
-  });
-
-  const text = response.text ?? 'Lo siento, no he podido generar una respuesta. Por favor, inténtalo de nuevo.';
   
   // Ejecutar acciones y limpiar bloques JSON
   const finalResponse = await processActionBlocks(text);

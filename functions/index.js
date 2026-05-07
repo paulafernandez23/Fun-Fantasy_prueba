@@ -223,3 +223,40 @@ exports.syncAdminClaim = functions.firestore
       return null;
     }
   });
+/**
+ * Cloud Function que actúa como proxy para Gemini AI.
+ * Esto permite mantener la API KEY en el lado del servidor de forma segura.
+ */
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+exports.chat = functions
+  .region("us-central1")
+  .runWith({
+    secrets: ["GEMINI_API_KEY"],
+  })
+  .https.onCall(async (data, context) => {
+    const { message, history, systemPrompt } = data;
+
+    if (!message) {
+      throw new functions.https.HttpsError("invalid-argument", "Falta el mensaje");
+    }
+
+    try {
+      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+      const model = genAI.getGenerativeModel({ 
+        model: "gemini-1.5-flash-latest",
+        systemInstruction: systemPrompt
+      });
+
+      const chat = model.startChat({
+        history: history,
+      });
+
+      const result = await chat.sendMessage(message);
+      const response = await result.response;
+      return { text: response.text() };
+    } catch (error) {
+      console.error("Error en chat proxy:", error);
+      throw new functions.https.HttpsError("internal", "Error al procesar el chat: " + error.message);
+    }
+  });

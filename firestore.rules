@@ -18,9 +18,11 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    match /orders/{document=**} {
-      allow create: if true;
-      allow read: if isAdmin(); // Asumimos que los clientes no leen su historial por ahora, si lo hacen sería: `isAdmin() || request.auth.uid == resource.data.userId`
+    match /orders/{orderId} {
+      allow create: if request.resource.data.total > 0 
+                    && request.resource.data.items.size() > 0
+                    && request.resource.data.created_at != null;
+      allow read: if isAdmin() || (request.auth != null && request.auth.uid == resource.data.user_id);
       allow update, delete: if isAdmin();
     }
 
