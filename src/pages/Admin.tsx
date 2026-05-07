@@ -2577,24 +2577,14 @@ function AdminContent() {
 }
 
 export default function Admin() {
-  const [session, setSession] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
+  const { user: session, isAdmin, isInitialized } = useAuthStore();
+  const [authError, setAuthError] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [authError, setAuthError] = useState('');
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setSession(user);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setAuthError('');
+    setAuthError(null);
     try {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (error: any) {
@@ -2602,9 +2592,14 @@ export default function Admin() {
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-surface-container-lowest text-primary"><span className="material-symbols-outlined animate-spin text-4xl">progress_activity</span></div>;
+  // El loader global de App.tsx ya maneja el estado inicial.
+  // Solo mostramos un loader local si por alguna razón isInitialized es falso aquí.
+  if (!isInitialized) {
+    console.log("Admin: isInitialized is false, showing loader");
+    return <div className="min-h-screen flex items-center justify-center bg-surface-container-lowest text-primary"><span className="material-symbols-outlined animate-spin text-4xl">progress_activity</span></div>;
+  }
 
-  const isAdmin = useAuthStore(state => state.isAdmin);
+  console.log("Admin Render State:", { hasSession: !!session, isAdmin, isInitialized });
 
   if (!session) {
     return (
