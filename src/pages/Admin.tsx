@@ -1784,7 +1784,7 @@ function AdminContent() {
             {editingPageId ? (
               <div className="flex-grow flex flex-col overflow-hidden">
                 <div className="p-4 border-b border-outline-variant/20 flex justify-between items-center bg-surface-container-low shrink-0">
-                  <h3 className="font-bold">Editando: {editingPageId === 'politica-privacidad' ? 'Política de Privacidad' : editingPageId === 'terminos-venta' ? 'Términos de Venta' : editingPageId === 'envios-devoluciones' ? 'Envíos y Devoluciones' : 'Preguntas Frecuentes'}</h3>
+                  <h3 className="font-bold">Editando: {editingPageId === 'politica-privacidad' ? 'Política de Privacidad' : editingPageId === 'terminos-venta' ? 'Términos de Venta' : editingPageId === 'envios-devoluciones' ? 'Envíos y Devoluciones' : editingPageId === 'politica-devoluciones-reembolso' ? 'Política de Devoluciones y Reembolso' : editingPageId === 'aviso-legal' ? 'Aviso Legal' : 'Preguntas Frecuentes'}</h3>
                   <div className="flex gap-2">
                     <button onClick={() => setEditingPageId(null)} className="px-4 py-2 font-medium">Cancelar</button>
                     <button onClick={async () => {
@@ -1866,13 +1866,13 @@ function AdminContent() {
             ) : (
               <div className="flex-grow overflow-auto p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {[
+                    { id: 'aviso-legal', title: 'Aviso Legal', icon: 'gavel' },
                     { id: 'politica-privacidad', title: 'Política de Privacidad', icon: 'policy' },
                     { id: 'politica-cookies', title: 'Política de Cookies', icon: 'cookie' },
                     { id: 'terminos-condiciones', title: 'Términos y Condiciones', icon: 'gavel' },
                     { id: 'terminos-venta', title: 'Términos de Venta', icon: 'receipt_long' },
                     { id: 'envios-devoluciones', title: 'Envíos y Devoluciones', icon: 'local_shipping' },
-                    { id: 'politica-devolucion', title: 'Política de Devolución', icon: 'assignment_return' },
+                    { id: 'politica-devoluciones-reembolso', title: 'Política de Devoluciones y Reembolso', icon: 'assignment_return' },
                     { id: 'actualizaciones-normativa', title: 'Actualizaciones de Normativa', icon: 'update' },
                     { id: 'faq', title: 'Preguntas Frecuentes (FAQ)', icon: 'help_center' },
                   ].map(page => (

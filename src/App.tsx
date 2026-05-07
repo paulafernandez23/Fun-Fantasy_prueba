@@ -120,13 +120,14 @@ export default function App() {
           <Route path="/mi-cuenta" element={<MiCuenta />} />
           <Route path="/unsubscribe" element={<Unsubscribe />} />
           {/* Páginas Legales */}
+          <Route path="/aviso-legal" element={<DynamicPage slug="aviso-legal" title="Aviso Legal" />} />
           <Route path="/politica-privacidad" element={<DynamicPage slug="politica-privacidad" title="Política de Privacidad" />} />
           <Route path="/terminos-venta" element={<DynamicPage slug="terminos-venta" title="Términos de Venta" />} />
           <Route path="/envios-devoluciones" element={<DynamicPage slug="envios-devoluciones" title="Envíos y Devoluciones" />} />
           <Route path="/faq" element={<FaqPage />} />
           <Route path="/politica-cookies" element={<DynamicPage slug="politica-cookies" title="Política de Cookies" />} />
           <Route path="/terminos-condiciones" element={<DynamicPage slug="terminos-condiciones" title="Términos y Condiciones" />} />
-          <Route path="/politica-devolucion" element={<DynamicPage slug="politica-devolucion" title="Política de Devolución" />} />
+          <Route path="/politica-devoluciones-reembolso" element={<DynamicPage slug="politica-devoluciones-reembolso" title="Política de Devoluciones y Reembolso" />} />
           <Route path="/actualizaciones-normativa" element={<DynamicPage slug="actualizaciones-normativa" title="Actualizaciones de Normativa" />} />
         </Routes>
       </Layout>

@@ -47,8 +47,10 @@ export default function Footer() {
             <ul className="space-y-4 text-sm text-on-surface-variant">
               <li><Link to="/contacto" className="hover:text-primary transition-colors">{t.nav.contact}</Link></li>
               <li><Link to="/faq" className="hover:text-primary transition-colors">Preguntas Frecuentes (FAQ)</Link></li>
+              <li><Link to="/aviso-legal" className="hover:text-primary transition-colors">{t.footer.legal || 'Aviso Legal'}</Link></li>
               <li><Link to="/politica-privacidad" className="hover:text-primary transition-colors">{t.footer.privacy || 'Privacidad'}</Link></li>
               <li><Link to="/terminos-venta" className="hover:text-primary transition-colors">{t.footer.terms || 'Términos'}</Link></li>
+              <li><Link to="/politica-devoluciones-reembolso" className="hover:text-primary transition-colors">{t.footer.returns || 'Devoluciones y Reembolso'}</Link></li>
               <li><Link to="/envios-devoluciones" className="hover:text-primary transition-colors">{t.footer.shipping || 'Envíos'}</Link></li>
             </ul>
           </div>
